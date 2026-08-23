@@ -393,7 +393,7 @@ const CategoryClientWrapper = () => {
             </button>
             <Link
               href={`/categories/view/${selectedCategoryId}`}
-              className={styles.deleteBtn}
+              className={styles.ghostBtn}
               style={{ textDecoration: "none" }}
             >
               👁️ View on page

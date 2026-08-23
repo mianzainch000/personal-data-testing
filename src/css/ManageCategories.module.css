@@ -293,14 +293,33 @@
   padding: 0.55rem 1rem;
   border-radius: 8px;
   color: var(--text-inverse);
-  background-color: var(--color-success, #1e8e5a);
+  background-color: var(--color-primary);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .editBtn:hover {
   opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .deleteBtn {
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  color: var(--text-inverse);
+  background-color: var(--color-danger);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.deleteBtn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.ghostBtn {
   border: 1px solid var(--color-ghost-hover);
   cursor: pointer;
   font-weight: 600;
@@ -309,9 +328,10 @@
   border-radius: 8px;
   color: var(--text-primary);
   background-color: var(--color-ghost);
+  transition: background-color 0.2s ease;
 }
 
-.deleteBtn:hover {
+.ghostBtn:hover {
   background-color: var(--color-ghost-hover);
 }
 
@@ -337,6 +357,35 @@
   padding-top: 0.9rem;
   flex-direction: column;
   border-top: 1px solid var(--color-ghost-hover);
+}
+
+.createPanel input,
+.createPanel textarea {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: var(--text-primary);
+  background-color: var(--color-ghost);
+  border: 1px solid var(--color-ghost-hover);
+}
+
+.createPanel textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.createPanel input:focus,
+.createPanel textarea:focus {
+  outline: 2px solid var(--color-primary);
+}
+
+.createPanel input::placeholder,
+.createPanel textarea::placeholder {
+  color: var(--text-primary);
+  opacity: 0.5;
 }
 
 .inlineRow {

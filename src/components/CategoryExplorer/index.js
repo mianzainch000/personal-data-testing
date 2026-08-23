@@ -108,7 +108,7 @@ const CategoryExplorer = ({ categoryId, subcategoryId = null }) => {
     : category?.categoryName || "...";
 
   return (
-    <div style={{ padding: "1.5rem", maxWidth: 1000, margin: "0 auto" }}>
+    <div className={itemStyles.pageContainer}>
       <ConfirmModal
         isOpen={showDeleteModal}
         title="Confirm Delete"
@@ -121,28 +121,30 @@ const CategoryExplorer = ({ categoryId, subcategoryId = null }) => {
         }}
       />
 
-      <div style={{ marginBottom: "1rem", fontSize: "0.9rem", opacity: 0.8 }}>
-        <Link href="/categories" style={{ textDecoration: "none" }}>
-          ⬅ All Categories
-        </Link>
-        {subcategoryId && (
+      <div className={itemStyles.breadcrumb}>
+        <Link href="/categories">⬅ All Categories</Link>
+        {subcategoryId ? (
           <>
-            {"  /  "}
-            <Link
-              href={`/categories/view/${categoryId}`}
-              style={{ textDecoration: "none" }}
-            >
+            <span className={itemStyles.breadcrumbSep}>/</span>
+            <Link href={`/categories/view/${categoryId}`}>
               {category?.categoryName || "Category"}
             </Link>
+            <span className={itemStyles.breadcrumbSep}>/</span>
+            <span className={itemStyles.breadcrumbCurrent}>{heading}</span>
+          </>
+        ) : (
+          <>
+            <span className={itemStyles.breadcrumbSep}>/</span>
+            <span className={itemStyles.breadcrumbCurrent}>{heading}</span>
           </>
         )}
       </div>
 
-      <h2 className="h2">{heading}</h2>
+      <h1 className={itemStyles.pageTitle}>{heading}</h1>
 
       {!subcategoryId && subcategories.length > 0 && (
         <>
-          <h3 style={{ margin: "1rem 0 0.5rem" }}>Subheadings</h3>
+          <h3 className={itemStyles.sectionLabel}>Subheadings</h3>
           <div className="categorie-grid">
             {subcategories.map((sub) => (
               <Link
@@ -157,58 +159,64 @@ const CategoryExplorer = ({ categoryId, subcategoryId = null }) => {
         </>
       )}
 
-      <div style={{ marginTop: "1.5rem" }}>
-        <Form
-          title="Add Card"
-          initialData={editData}
-          onCancelEdit={() => setEditData(null)}
-          fields={[
-            {
-              key: "title",
-              label: "Heading",
-              placeholder: "e.g. Card title",
-              required: true,
-            },
-            {
-              key: "subheading",
-              label: "Sub Heading (optional)",
-              placeholder: "e.g. short label",
-              required: false,
-            },
-            {
-              key: "detail",
-              label: "Detail (optional)",
-              type: "textarea",
-              placeholder: "Write full detail here...",
-              required: false,
-            },
-            {
-              key: "link",
-              label: "Link (optional)",
-              placeholder: "https://...",
-              required: false,
-            },
-          ]}
-          onSubmit={handleFormSubmit}
-        />
-      </div>
-
-      {items.length === 0 ? (
-        <p className={itemStyles.emptyText}>No cards here yet. Add your first one above.</p>
-      ) : (
-        <div className={itemStyles.grid}>
-          {items.map((item) => (
-            <ItemCard
-              key={item._id}
-              item={item}
-              onEdit={(row) => setEditData(row)}
-              onDelete={(id) => {
-                setDeleteId(id);
-                setShowDeleteModal(true);
-              }}
+      {(subcategoryId || subcategories.length === 0) && (
+        <>
+          <div className={itemStyles.formWrap}>
+            <Form
+              title="Add Card"
+              initialData={editData}
+              onCancelEdit={() => setEditData(null)}
+              fields={[
+                {
+                  key: "title",
+                  label: "Heading",
+                  placeholder: "e.g. Card title",
+                  required: true,
+                },
+                {
+                  key: "subheading",
+                  label: "Sub Heading (optional)",
+                  placeholder: "e.g. short label",
+                  required: false,
+                },
+                {
+                  key: "detail",
+                  label: "Detail (optional)",
+                  type: "textarea",
+                  placeholder: "Write full detail here...",
+                  required: false,
+                },
+                {
+                  key: "link",
+                  label: "Link (optional)",
+                  placeholder: "https://...",
+                  required: false,
+                },
+              ]}
+              onSubmit={handleFormSubmit}
             />
-          ))}
-        </div>
+          </div>
+
+          {items.length === 0 ? (
+            <p className={itemStyles.emptyText}>
+              No cards here yet. Add your first one above.
+            </p>
+          ) : (
+            <div className={itemStyles.list}>
+              {items.map((item) => (
+                <ItemCard
+                  key={item._id}
+                  item={item}
+                  onEdit={(row) => setEditData(row)}
+                  onDelete={(id) => {
+                    setDeleteId(id);
+                    setShowDeleteModal(true);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
