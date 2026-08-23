@@ -23,7 +23,7 @@ exports.getItems = async (req, res) => {
 
 exports.createItem = async (req, res) => {
   try {
-    const { categoryId, subcategoryId, title, subheading, detail, link } =
+    const { categoryId, subcategoryId, title, subheading, detail, link, position } =
       req.body;
 
     if (!categoryId) {
@@ -46,6 +46,17 @@ exports.createItem = async (req, res) => {
     };
 
     const count = await Item.countDocuments(filter);
+    let insertOrder = count;
+
+    if (position !== undefined && position !== null && position !== "") {
+      const pos = Math.max(1, Math.min(Number(position), count + 1));
+      insertOrder = pos - 1;
+
+      await Item.updateMany(
+        { ...filter, order: { $gte: insertOrder } },
+        { $inc: { order: 1 } },
+      );
+    }
 
     const newItem = await Item.create({
       categoryId,
@@ -55,7 +66,7 @@ exports.createItem = async (req, res) => {
       detail: detail || "",
       link: link || "",
       userId: req.user._id,
-      order: count,
+      order: insertOrder,
     });
 
     res.status(201).json({
@@ -70,7 +81,7 @@ exports.createItem = async (req, res) => {
 
 exports.updateItem = async (req, res) => {
   try {
-    const { title, subheading, detail, link } = req.body;
+    const { title, subheading, detail, link, position } = req.body;
 
     const item = await Item.findOne({
       _id: req.params.id,
@@ -78,6 +89,29 @@ exports.updateItem = async (req, res) => {
     });
     if (!item)
       return res.status(404).json({ success: false, message: "Not found" });
+
+    if (position !== undefined && position !== null && position !== "") {
+      const filter = {
+        userId: req.user._id,
+        categoryId: item.categoryId,
+        subcategoryId: item.subcategoryId,
+        _id: { $ne: item._id },
+      };
+      const siblings = await Item.find(filter).sort({ order: 1 });
+
+      const pos = Math.max(1, Math.min(Number(position), siblings.length + 1));
+      siblings.splice(pos - 1, 0, item);
+
+      await Promise.all(
+        siblings.map((doc, index) => {
+          if (String(doc._id) === String(item._id)) {
+            item.order = index;
+            return null;
+          }
+          return Item.updateOne({ _id: doc._id }, { order: index });
+        }),
+      );
+    }
 
     if (title !== undefined) item.title = title;
     if (subheading !== undefined) item.subheading = subheading;

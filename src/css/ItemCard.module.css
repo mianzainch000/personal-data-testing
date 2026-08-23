@@ -31,6 +31,7 @@
 
 .breadcrumbCurrent {
   opacity: 0.75;
+  user-select: none;
 }
 
 .pageTitle {
@@ -38,6 +39,7 @@
   font-weight: 800;
   font-size: clamp(1.4rem, 4vw, 1.9rem);
   color: var(--text-primary);
+  user-select: none;
 }
 
 .sectionLabel {
@@ -85,10 +87,11 @@
 
 .title {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1.25rem;
   font-weight: 700;
   word-break: break-word;
   color: var(--text-primary);
+  text-align: center;
 }
 
 .subheading {

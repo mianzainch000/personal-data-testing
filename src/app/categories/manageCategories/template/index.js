@@ -1,6 +1,5 @@
 "use client";
 import axios from "axios";
-import Link from "next/link";
 import Loader from "@/components/Loader";
 import { useState, useEffect } from "react";
 import { useSnackbar } from "@/components/Snackbar";
@@ -8,9 +7,20 @@ import ConfirmModal from "@/components/ConfirmModal";
 import handleAxiosError from "@/components/HandleAxiosError";
 import styles from "@/css/ManageCategories.module.css";
 
-const emptyCategoryForm = { categoryName: "", categoryLink: "", detail: "" };
+const emptyCategoryForm = {
+  categoryName: "",
+  categoryLink: "",
+  detail: "",
+  position: "",
+};
 const emptySubForm = { subcategoryName: "", subcategoryLink: "", detail: "" };
-const emptyItemForm = { title: "", subheading: "", detail: "", link: "" };
+const emptyItemForm = {
+  title: "",
+  subheading: "",
+  detail: "",
+  link: "",
+  position: "",
+};
 
 const CategoryClientWrapper = () => {
   const showAlertMessage = useSnackbar();
@@ -123,6 +133,10 @@ const CategoryClientWrapper = () => {
       categoryName: selectedCategory.categoryName || "",
       categoryLink: selectedCategory.categoryLink || "",
       detail: selectedCategory.detail || "",
+      position:
+        selectedCategory.order !== undefined && selectedCategory.order !== null
+          ? String(selectedCategory.order + 1)
+          : "",
     });
     setEditingCategory(true);
     setShowCategoryForm(true);
@@ -139,13 +153,18 @@ const CategoryClientWrapper = () => {
     if (!categoryForm.categoryName.trim()) return;
     setLoading(true);
     try {
+      const payload = {
+        ...categoryForm,
+        position:
+          categoryForm.position !== "" ? Number(categoryForm.position) : undefined,
+      };
       const res =
         editingCategory && selectedCategoryId
           ? await axios.put(
               `manageCategories/api/${selectedCategoryId}`,
-              categoryForm,
+              payload,
             )
-          : await axios.post("manageCategories/api", categoryForm);
+          : await axios.post("manageCategories/api", payload);
 
       showAlertMessage({
         message:
@@ -274,6 +293,10 @@ const CategoryClientWrapper = () => {
       subheading: item.subheading || "",
       detail: item.detail || "",
       link: item.link || "",
+      position:
+        item.order !== undefined && item.order !== null
+          ? String(item.order + 1)
+          : "",
     });
     setEditingItemId(item._id);
     setShowItemForm(true);
@@ -303,6 +326,8 @@ const CategoryClientWrapper = () => {
         ...itemForm,
         categoryId: selectedCategoryId,
         subcategoryId: selectedSubcategoryId || null,
+        position:
+          itemForm.position !== "" ? Number(itemForm.position) : undefined,
       };
       const res = editingItemId
         ? await axios.put(`items/api/${editingItemId}`, payload)
@@ -406,13 +431,6 @@ const CategoryClientWrapper = () => {
             >
               🗑️ Delete this category
             </button>
-            <Link
-              href={`/categories/view/${selectedCategoryId}`}
-              className={styles.ghostBtn}
-              style={{ textDecoration: "none" }}
-            >
-              👁️ View on page
-            </Link>
           </div>
         )}
 
@@ -441,21 +459,15 @@ const CategoryClientWrapper = () => {
               required
             />
             <input
-              type="text"
-              placeholder="Link (optional)"
-              value={categoryForm.categoryLink}
+              type="number"
+              min="1"
+              placeholder="Index (optional, e.g. 2)"
+              value={categoryForm.position}
               onChange={(e) =>
                 setCategoryForm({
                   ...categoryForm,
-                  categoryLink: e.target.value,
+                  position: e.target.value,
                 })
-              }
-            />
-            <textarea
-              placeholder="Detail (optional)"
-              value={categoryForm.detail}
-              onChange={(e) =>
-                setCategoryForm({ ...categoryForm, detail: e.target.value })
               }
             />
             <div className={styles.createActions}>
@@ -595,22 +607,6 @@ const CategoryClientWrapper = () => {
 
           {showItemForm && (
             <form className={styles.createPanel} onSubmit={submitItemForm}>
-              <input
-                type="text"
-                placeholder="Heading (optional)"
-                value={itemForm.title}
-                onChange={(e) =>
-                  setItemForm({ ...itemForm, title: e.target.value })
-                }
-              />
-              <input
-                type="text"
-                placeholder="Sub Heading (optional)"
-                value={itemForm.subheading}
-                onChange={(e) =>
-                  setItemForm({ ...itemForm, subheading: e.target.value })
-                }
-              />
               <textarea
                 placeholder="Detail (optional)"
                 value={itemForm.detail}
@@ -624,6 +620,15 @@ const CategoryClientWrapper = () => {
                 value={itemForm.link}
                 onChange={(e) =>
                   setItemForm({ ...itemForm, link: e.target.value })
+                }
+              />
+              <input
+                type="number"
+                min="1"
+                placeholder="Index (optional, e.g. 2)"
+                value={itemForm.position}
+                onChange={(e) =>
+                  setItemForm({ ...itemForm, position: e.target.value })
                 }
               />
               <div className={styles.createActions}>
