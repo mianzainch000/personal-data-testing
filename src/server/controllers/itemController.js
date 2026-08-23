@@ -32,10 +32,11 @@ exports.createItem = async (req, res) => {
         .json({ success: false, message: "categoryId is required" });
     }
 
-    if (!title || !String(title).trim()) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Heading is required" });
+    if (!title?.trim() && !subheading?.trim() && !detail?.trim() && !link?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one field is required",
+      });
     }
 
     const filter = {
@@ -82,6 +83,18 @@ exports.updateItem = async (req, res) => {
     if (subheading !== undefined) item.subheading = subheading;
     if (detail !== undefined) item.detail = detail;
     if (link !== undefined) item.link = link;
+
+    if (
+      !item.title?.trim() &&
+      !item.subheading?.trim() &&
+      !item.detail?.trim() &&
+      !item.link?.trim()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one field is required",
+      });
+    }
 
     await item.save();
 

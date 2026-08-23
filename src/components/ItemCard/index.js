@@ -1,11 +1,11 @@
 "use client";
 import styles from "@/css/ItemCard.module.css";
 
-const ItemCard = ({ item, onEdit, onDelete }) => {
+const ItemCard = ({ item }) => {
   return (
     <div className={styles.card}>
       <div className={styles.cardHead}>
-        <p className={styles.title}>{item.title}</p>
+        {item.title && <p className={styles.title}>{item.title}</p>}
         {item.subheading && (
           <p className={styles.subheading}>{item.subheading}</p>
         )}
@@ -20,15 +20,6 @@ const ItemCard = ({ item, onEdit, onDelete }) => {
             🔗 Open Link
           </a>
         )}
-      </div>
-
-      <div className={styles.actions}>
-        <span onClick={() => onEdit(item)} title="Edit">
-          ✏️
-        </span>
-        <span onClick={() => onDelete(item._id)} title="Delete">
-          🗑️
-        </span>
       </div>
     </div>
   );

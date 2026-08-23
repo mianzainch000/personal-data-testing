@@ -18,8 +18,8 @@ const itemSchema = new mongoose.Schema(
 
     title: {
       type: String,
-      required: true,
       trim: true,
+      default: "",
     },
     subheading: {
       type: String,

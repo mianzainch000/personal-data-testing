@@ -281,7 +281,22 @@ const CategoryClientWrapper = () => {
 
   const submitItemForm = async (e) => {
     e.preventDefault();
-    if (!itemForm.title.trim() || !selectedCategoryId) return;
+    if (!selectedCategoryId) return;
+
+    const hasAnyValue =
+      itemForm.title.trim() ||
+      itemForm.subheading.trim() ||
+      itemForm.detail.trim() ||
+      itemForm.link.trim();
+
+    if (!hasAnyValue) {
+      showAlertMessage({
+        message: "At least one field is required",
+        type: "error",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
@@ -582,12 +597,11 @@ const CategoryClientWrapper = () => {
             <form className={styles.createPanel} onSubmit={submitItemForm}>
               <input
                 type="text"
-                placeholder="Heading"
+                placeholder="Heading (optional)"
                 value={itemForm.title}
                 onChange={(e) =>
                   setItemForm({ ...itemForm, title: e.target.value })
                 }
-                required
               />
               <input
                 type="text"
@@ -652,7 +666,9 @@ const CategoryClientWrapper = () => {
               <div key={item._id} className={styles.detailRow}>
                 <span className={styles.detailNumber}>{index + 1}</span>
                 <div className={styles.detailBody}>
-                  <p className={styles.detailTitle}>{item.title}</p>
+                  {item.title && (
+                    <p className={styles.detailTitle}>{item.title}</p>
+                  )}
                   {item.subheading && (
                     <p className={styles.detailSubheading}>
                       {item.subheading}
