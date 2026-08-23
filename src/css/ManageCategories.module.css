@@ -1,0 +1,446 @@
+.formCard {
+  width: 100%;
+  padding: 1.5rem;
+  max-width: 480px;
+  margin-bottom: 2rem;
+  border-radius: 16px;
+  color: var(--text-primary);
+  box-shadow: var(--card-shadow);
+  background-color: var(--card-bg);
+}
+
+.formCard h2 {
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+}
+
+.form {
+  gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.form label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form input,
+.form textarea {
+  width: 100%;
+  padding: 0.6rem;
+  margin-top: 6px;
+  font-family: inherit;
+  border-radius: 6px;
+  color: var(--text-primary);
+  background-color: var(--color-ghost);
+  border: 1px solid var(--color-ghost-hover);
+}
+
+.form textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+.form input:focus,
+.form textarea:focus {
+  outline: 2px solid var(--color-primary);
+}
+
+.hint {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.formActions {
+  gap: 0.6rem;
+  display: flex;
+  margin-top: 0.5rem;
+}
+
+.submitButton {
+  flex: 1;
+  border: none;
+  padding: 0.7rem;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 6px;
+  color: var(--text-inverse);
+  background-color: var(--color-primary);
+  transition: opacity 0.2s ease;
+}
+
+.submitButton:hover {
+  opacity: 0.9;
+}
+
+.cancelButton {
+  border: none;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  border-radius: 6px;
+  color: var(--text-inverse);
+  background-color: var(--color-danger);
+  transition: opacity 0.2s ease;
+}
+
+.cancelButton:hover {
+  opacity: 0.9;
+}
+
+.list {
+  gap: 0.9rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.card {
+  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  color: var(--text-primary);
+  box-shadow: var(--card-shadow);
+  background-color: var(--card-bg);
+}
+
+.cardTop {
+  gap: 0.8rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.cardMain {
+  gap: 0.6rem;
+  display: flex;
+  align-items: flex-start;
+}
+
+.indexBadge {
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 0.8rem;
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  color: var(--text-inverse);
+  background-color: var(--color-primary);
+}
+
+.cardName {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.cardLink {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 2px;
+  color: var(--color-primary);
+  word-break: break-all;
+}
+
+.cardDetail {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  opacity: 0.85;
+  white-space: pre-wrap;
+}
+
+.cardActions {
+  gap: 1.1rem;
+  display: flex;
+  font-size: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.subToggle {
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-top: 0.7rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  color: var(--text-primary);
+  background-color: var(--color-ghost);
+}
+
+.subToggle:hover {
+  background-color: var(--color-ghost-hover);
+}
+
+.subPanel {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--color-ghost-hover);
+}
+
+.subList {
+  gap: 0.5rem;
+  display: flex;
+  margin-top: 0.7rem;
+  flex-direction: column;
+}
+
+.subRow {
+  gap: 0.6rem;
+  display: flex;
+  padding: 0.6rem 0.8rem;
+  align-items: flex-start;
+  border-radius: 8px;
+  justify-content: space-between;
+  background-color: var(--color-ghost);
+}
+
+.subRowMain {
+  gap: 0.5rem;
+  display: flex;
+  align-items: flex-start;
+}
+
+.subIndexBadge {
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 0.7rem;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  color: var(--text-inverse);
+  background-color: var(--color-danger);
+}
+
+.subName {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.subActions {
+  gap: 0.9rem;
+  display: flex;
+  font-size: 15px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.pageWrap {
+  width: 100%;
+  margin: 0 auto;
+  max-width: 720px;
+  padding: 0 1rem 3rem;
+}
+
+.stepCard {
+  width: 100%;
+  padding: 1.4rem 1.5rem;
+  margin-bottom: 1.2rem;
+  border-radius: 14px;
+  color: var(--text-primary);
+  box-shadow: var(--card-shadow);
+  background-color: var(--card-bg);
+}
+
+.stepTitle {
+  gap: 0.6rem;
+  display: flex;
+  font-weight: 700;
+  font-size: 1rem;
+  margin: 0 0 0.9rem;
+  align-items: center;
+}
+
+.stepBadge {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: flex;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-inverse);
+  background-color: var(--color-primary);
+}
+
+.select {
+  width: 100%;
+  padding: 0.65rem 0.7rem;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  color: var(--text-primary);
+  background-color: var(--color-ghost);
+  border: 1px solid var(--color-ghost-hover);
+}
+
+.select:focus {
+  outline: 2px solid var(--color-primary);
+}
+
+.groupButtons {
+  gap: 0.6rem;
+  display: flex;
+  margin-top: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.editBtn {
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  color: var(--text-inverse);
+  background-color: var(--color-success, #1e8e5a);
+}
+
+.editBtn:hover {
+  opacity: 0.9;
+}
+
+.deleteBtn {
+  border: 1px solid var(--color-ghost-hover);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  color: var(--text-primary);
+  background-color: var(--color-ghost);
+}
+
+.deleteBtn:hover {
+  background-color: var(--color-ghost-hover);
+}
+
+.toggleCreate {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-top: 0.9rem;
+  padding: 0;
+  color: var(--color-primary);
+}
+
+.toggleCreate:hover {
+  text-decoration: underline;
+}
+
+.createPanel {
+  gap: 0.6rem;
+  display: flex;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  flex-direction: column;
+  border-top: 1px solid var(--color-ghost-hover);
+}
+
+.inlineRow {
+  gap: 0.6rem;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.inlineRow > * {
+  flex: 1;
+  min-width: 160px;
+}
+
+.createActions {
+  gap: 0.6rem;
+  display: flex;
+}
+
+.breadcrumbChip {
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  margin: 0 0.3rem 0.3rem 0;
+  color: var(--text-primary);
+  background-color: var(--color-ghost);
+}
+
+.breadcrumbChipActive {
+  color: var(--text-inverse);
+  background-color: var(--color-primary);
+}
+
+.disabledHint {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.detailList {
+  gap: 0.7rem;
+  display: flex;
+  margin-top: 0.9rem;
+  flex-direction: column;
+}
+
+.detailRow {
+  gap: 0.8rem;
+  display: flex;
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  align-items: flex-start;
+  background-color: var(--color-ghost);
+}
+
+.detailNumber {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-inverse);
+  background-color: var(--color-primary);
+}
+
+.detailBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.detailTitle {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+  word-break: break-word;
+}
+
+.detailSubheading {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  opacity: 0.75;
+  word-break: break-word;
+}
+
+.detailText {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  opacity: 0.9;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.detailActions {
+  gap: 0.8rem;
+  display: flex;
+  flex-shrink: 0;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+

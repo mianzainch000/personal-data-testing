@@ -1,0 +1,447 @@
+.container {
+  margin: 0 auto;
+  max-width: 900px;
+  text-align: center;
+  padding: 15px 20px;
+  border-radius: 10px;
+  color: var(--text-primary);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+  font-family: Arial, sans-serif;
+}
+
+.tabs {
+  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.tab {
+  flex: 1;
+  cursor: pointer;
+  text-align: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  transition: all 0.3s ease;
+  color: var(--text-primary);
+  background: var(--color-ghost);
+}
+
+.tab.active {
+  font-weight: bold;
+  background: var(--color-primary);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.consumerInfo {
+  z-index: 1;
+  padding: 15px;
+  position: relative;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+}
+
+.buttonGroup {
+  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+  justify-content: flex-end;
+}
+
+.filters {
+  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  margin: 15px 0 20px 0;
+  justify-content: center;
+}
+
+.link {
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 8px;
+  display: inline-block;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  color: var(--text-primary);
+  background: var(--color-ghost);
+}
+
+.link:hover {
+  color: var(--text-inverse);
+  transform: translateY(-2px);
+  background: var(--color-primary);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.filterInput,
+.filterSelect {
+  outline: none;
+  font-size: 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: var(--text-primary);
+  background: var(--card-bg);
+  border: 1px solid var(--color-ghost-hover);
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 12px;
+  text-align: center;
+  border: 1px solid #ddd;
+  color: var(--text-primary);
+}
+
+.table td span {
+  cursor: pointer;
+  display: inline-flex;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.pagination {
+  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 100%;
+  margin-top: 20px;
+  justify-content: center;
+}
+
+.pagination button {
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  color: var(--text-primary);
+  background: var(--color-ghost);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.pagination button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: var(--color-ghost-hover);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+  cursor: not-allowed;
+  background: var(--color-ghost);
+}
+
+.activePage {
+  font-weight: bold;
+  color: var(--text-inverse) !important;
+  background: var(--color-primary) !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
+}
+
+.paginationWrap {
+  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.pageBtn {
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  color: var(--text-primary);
+  background: var(--color-ghost);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.pageBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: var(--color-ghost-hover);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.pageBtn:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+  cursor: not-allowed;
+  background: var(--color-ghost);
+}
+
+.rowsControl {
+  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+.rowsLabel {
+  opacity: 0.75;
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.customDropdownWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.customDropdownToggle {
+  outline: none;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+  background: var(--card-bg);
+  border: 1px solid var(--color-ghost-hover);
+}
+
+.customDropdownToggle:hover {
+  border-color: var(--color-primary);
+}
+
+.customDropdownMenu {
+  left: 0;
+  z-index: 100;
+  width: 230px;
+  padding: 8px 0;
+  list-style: none;
+  overflow-y: auto;
+  max-height: 260px;
+  position: absolute;
+  border-radius: 12px;
+  top: calc(100% + 6px);
+  background: var(--card-bg);
+  max-width: calc(100vw - 24px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--color-ghost-hover);
+}
+
+.customDropdownMenu.openUp {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+.optionRow {
+  gap: 14px;
+  display: flex;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 10px 16px;
+  align-items: center;
+  white-space: nowrap;
+  color: var(--text-primary);
+  justify-content: space-between;
+}
+
+.optionRow:hover {
+  color: var(--text-inverse);
+  background: var(--color-primary);
+}
+
+.optionActive {
+  font-weight: 700;
+  color: var(--text-inverse);
+  background: var(--color-primary);
+}
+
+.optionIcons {
+  gap: 12px;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.optionIconBtn {
+  padding: 4px;
+  opacity: 0.75;
+  line-height: 1;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.optionIconBtn:hover {
+  opacity: 1;
+}
+
+.optionEditRow {
+  gap: 8px;
+  display: flex;
+  padding: 8px 16px;
+  align-items: center;
+}
+
+.addRow {
+  gap: 8px;
+  display: flex;
+  margin-top: 4px;
+  align-items: center;
+  padding: 10px 16px 6px;
+  border-top: 1px solid var(--color-ghost-hover);
+}
+
+.addRowLabel {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--color-primary);
+}
+
+.inlineInput {
+  width: 100%;
+  outline: none;
+  font-weight: 500;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  border-radius: 8px;
+  color: var(--text-primary);
+  background: var(--color-ghost);
+  border: 1px solid var(--color-ghost-hover);
+}
+
+.inlineInput:focus {
+  border-color: var(--color-primary);
+}
+
+.inlineOkBtn {
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  border-radius: 8px;
+  white-space: nowrap;
+  color: var(--text-inverse);
+  background: var(--color-primary);
+}
+
+.inlineOkBtn:hover {
+  opacity: 0.85;
+}
+
+.rowsTotal {
+  opacity: 0.65;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .consumerInfo {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    padding: 40px 15px 15px 15px;
+  }
+
+  .consumerInfo div[style*="position: absolute"] {
+    top: 10px !important;
+    gap: 20px !important;
+    right: 50% !important;
+    transform: translateX(50%) !important;
+  }
+
+  .buttonGroup {
+    justify-content: center !important;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tr {
+    padding: 10px;
+    display: block;
+    margin-bottom: 15px;
+    border-radius: 12px;
+    border: 1px solid var(--color-ghost-hover);
+  }
+
+  .table td {
+    display: flex;
+    padding: 10px 5px;
+    align-items: center;
+    border: none !important;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--color-ghost) !important;
+  }
+
+  .table td:last-child {
+    border-bottom: none !important;
+  }
+
+  .table td::before {
+    font-weight: bold;
+    content: attr(data-label);
+    color: var(--color-primary);
+  }
+
+  .paginationWrap {
+    gap: 10px;
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .pagination {
+    gap: 5px;
+    width: 100%;
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .pageBtn {
+    min-width: 30px;
+    padding: 6px 8px;
+    font-size: 0.8rem;
+  }
+
+  .customDropdownToggle {
+    padding: 6px 12px;
+    font-size: 0.78rem;
+  }
+
+  .customDropdownMenu {
+    left: 50%;
+    width: 200px;
+    transform: translateX(-50%);
+  }
+
+  .customDropdownMenu.openUp {
+    transform: translateX(-50%);
+  }
+
+  .optionRow {
+    gap: 10px;
+    padding: 9px 14px;
+    font-size: 0.78rem;
+  }
+}

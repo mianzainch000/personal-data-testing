@@ -1,0 +1,134 @@
+.container {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  padding: 3rem 1.25rem;
+  justify-content: center;
+  background: var(--bg-main);
+}
+
+.card {
+  width: 100%;
+  gap: 1.5rem;
+  display: grid;
+  max-width: 920px;
+  padding: 2.25rem;
+  border-radius: 18px;
+  align-items: center;
+  background: var(--card-bg);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--card-shadow);
+  grid-template-columns: 1fr 1.1fr;
+}
+
+.illustration {
+  display: flex;
+  padding: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  max-width: 320px;
+  transform: translateY(0px);
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.header {
+  padding: 0.25rem 0.5rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.05;
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  margin: 0;
+  opacity: 0.8;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.actions {
+  gap: 0.75rem;
+  display: flex;
+  margin-top: 1.25rem;
+}
+
+.primaryBtn {
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
+  display: inline-block;
+  text-decoration: none;
+  color: var(--text-inverse);
+  background: var(--color-primary);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.18);
+}
+
+.primaryBtn:hover,
+.primaryBtn:focus {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 30px rgba(59, 130, 246, 0.18);
+}
+
+.ghostBtn {
+  transition:
+    background 0.14s ease,
+    transform 0.14s ease;
+  font-weight: 600;
+  border-radius: 12px;
+  display: inline-block;
+  text-decoration: none;
+  padding: 0.62rem 0.9rem;
+  color: var(--text-primary);
+  background: var(--color-ghost);
+  border: 1px solid var(--color-ghost-hover);
+}
+
+.ghostBtn:hover,
+.ghostBtn:focus {
+  transform: translateY(-2px);
+  background: var(--color-ghost-hover);
+}
+
+.footnote {
+  opacity: 0.6;
+  grid-column: 1 / -1;
+  margin-top: 0.75rem;
+  color: var(--text-primary);
+}
+
+@media (max-width: 820px) {
+  .card {
+    padding: 1.5rem;
+    grid-template-columns: 1fr;
+  }
+
+  .svg {
+    max-width: 260px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+}

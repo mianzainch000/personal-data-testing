@@ -1,0 +1,40 @@
+"use client";
+import styles from "@/css/ItemCard.module.css";
+
+const ItemCard = ({ item, onEdit, onDelete }) => {
+  return (
+    <div className={styles.card}>
+      <div className={styles.cardHead}>
+        <div>
+          <p className={styles.title}>{item.title}</p>
+          {item.subheading && (
+            <p className={styles.subheading}>{item.subheading}</p>
+          )}
+        </div>
+        <div className={styles.actions}>
+          <span onClick={() => onEdit(item)} title="Edit">
+            ✏️
+          </span>
+          <span onClick={() => onDelete(item._id)} title="Delete">
+            🗑️
+          </span>
+        </div>
+      </div>
+
+      {item.detail && <p className={styles.detail}>{item.detail}</p>}
+
+      {item.link && (
+        <a
+          href={item.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.link}
+        >
+          🔗 Open Link
+        </a>
+      )}
+    </div>
+  );
+};
+
+export default ItemCard;

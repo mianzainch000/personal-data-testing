@@ -1,0 +1,35 @@
+.loaderOverlay {
+  top: 0;
+  left: 0;
+  width: 100vw;
+  opacity: 0.8;
+  height: 100vh;
+  display: flex;
+  z-index: 9999;
+  position: fixed;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--loader-overlay-bg);
+}
+
+.loaderWrapper {
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  border: 8px solid var(--loader-track-color);
+  border-top: 8px solid var(--loader-spin-color);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
