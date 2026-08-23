@@ -43,7 +43,7 @@ const Categories = () => {
       {!loading && categories.length === 0 && (
         <p style={{ textAlign: "center", opacity: 0.8 }}>
           Abhi tak koi category nahi hai. &quot;Manage Categories&quot; se apni
-          pehli category add karein.
+          pehli category (Heading) add karein.
         </p>
       )}
 
@@ -51,7 +51,7 @@ const Categories = () => {
         {categories.map((item) => (
           <Link
             key={item._id}
-            href={`categories/view/${item._id}`}
+            href={`categories/${item._id}`}
             className="categorie-card"
           >
             {item.categoryName}

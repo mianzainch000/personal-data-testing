@@ -11,8 +11,6 @@ import handleAxiosError from "@/components/HandleAxiosError";
 const CategoryExplorer = ({ categoryId, subcategoryId = null }) => {
   const showAlertMessage = useSnackbar();
 
-  const [category, setCategory] = useState(null);
-  const [subcategory, setSubcategory] = useState(null);
   const [subcategories, setSubcategories] = useState([]);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,8 +18,10 @@ const CategoryExplorer = ({ categoryId, subcategoryId = null }) => {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [catsRes, itemsRes] = await Promise.all([
-        axios.get("/categories/manageCategories/api"),
+      const [subRes, itemsRes] = await Promise.all([
+        axios.get(
+          `/categories/manageCategories/subcategories/api?categoryId=${categoryId}`,
+        ),
         axios.get(
           `/categories/items/api?categoryId=${categoryId}${
             subcategoryId ? `&subcategoryId=${subcategoryId}` : ""
@@ -29,23 +29,8 @@ const CategoryExplorer = ({ categoryId, subcategoryId = null }) => {
         ),
       ]);
 
-      const cats = catsRes?.data?.data || [];
-      const currentCategory = cats.find((c) => c._id === categoryId) || null;
-      setCategory(currentCategory);
-
-      const subRes = await axios.get(
-        `/categories/manageCategories/subcategories/api?categoryId=${categoryId}`,
-      );
       const subs = subRes?.data?.data || [];
-
-      if (!subcategoryId) {
-        setSubcategories(subs);
-        setSubcategory(null);
-      } else {
-        setSubcategory(subs.find((s) => s._id === subcategoryId) || null);
-        setSubcategories([]);
-      }
-
+      setSubcategories(subcategoryId ? [] : subs);
       setItems(itemsRes?.data?.data || []);
     } catch (error) {
       const { message } = handleAxiosError(error);
@@ -62,33 +47,8 @@ const CategoryExplorer = ({ categoryId, subcategoryId = null }) => {
 
   if (loading) return <Loader />;
 
-  const heading = subcategoryId
-    ? subcategory?.subcategoryName || "..."
-    : category?.categoryName || "...";
-
   return (
     <div className={itemStyles.pageContainer}>
-      <div className={itemStyles.breadcrumb}>
-        <Link href="/categories">⬅ All Categories</Link>
-        {subcategoryId ? (
-          <>
-            <span className={itemStyles.breadcrumbSep}>/</span>
-            <Link href={`/categories/view/${categoryId}`}>
-              {category?.categoryName || "Category"}
-            </Link>
-            <span className={itemStyles.breadcrumbSep}>/</span>
-            <span className={itemStyles.breadcrumbCurrent}>{heading}</span>
-          </>
-        ) : (
-          <>
-            <span className={itemStyles.breadcrumbSep}>/</span>
-            <span className={itemStyles.breadcrumbCurrent}>{heading}</span>
-          </>
-        )}
-      </div>
-
-      <h1 className={itemStyles.pageTitle}>{heading}</h1>
-
       {!subcategoryId && subcategories.length > 0 && (
         <>
           <h3 className={itemStyles.sectionLabel}>Subheadings</h3>
@@ -96,7 +56,7 @@ const CategoryExplorer = ({ categoryId, subcategoryId = null }) => {
             {subcategories.map((sub) => (
               <Link
                 key={sub._id}
-                href={`/categories/view/${categoryId}/${sub._id}`}
+                href={`/categories/${categoryId}/${sub._id}`}
                 className="categorie-card"
               >
                 {sub.subcategoryName}

@@ -83,6 +83,7 @@
 .cardHead {
   flex: 1;
   min-width: 0;
+  text-align: center;
 }
 
 .title {
@@ -103,11 +104,12 @@
 
 .detail {
   margin: 0.6rem 0 0;
-  font-size: 0.9rem;
-  line-height: 1.5;
+  font-size: 0.95rem;
+  line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
-  opacity: 0.9;
+  color: var(--text-primary);
+  opacity: 0.85;
 }
 
 .link {

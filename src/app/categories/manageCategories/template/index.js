@@ -13,7 +13,12 @@ const emptyCategoryForm = {
   detail: "",
   position: "",
 };
-const emptySubForm = { subcategoryName: "", subcategoryLink: "", detail: "" };
+const emptySubForm = {
+  subcategoryName: "",
+  subcategoryLink: "",
+  detail: "",
+  position: "",
+};
 const emptyItemForm = {
   title: "",
   subheading: "",
@@ -214,6 +219,11 @@ const CategoryClientWrapper = () => {
       subcategoryName: selectedSubcategory.subcategoryName || "",
       subcategoryLink: selectedSubcategory.subcategoryLink || "",
       detail: selectedSubcategory.detail || "",
+      position:
+        selectedSubcategory.order !== undefined &&
+        selectedSubcategory.order !== null
+          ? String(selectedSubcategory.order + 1)
+          : "",
     });
     setEditingSubcategory(true);
     setShowSubForm(true);
@@ -230,7 +240,11 @@ const CategoryClientWrapper = () => {
     if (!subForm.subcategoryName.trim() || !selectedCategoryId) return;
     setLoading(true);
     try {
-      const payload = { ...subForm, categoryId: selectedCategoryId };
+      const payload = {
+        ...subForm,
+        categoryId: selectedCategoryId,
+        position: subForm.position !== "" ? Number(subForm.position) : undefined,
+      };
       const res =
         editingSubcategory && selectedSubcategoryId
           ? await axios.put(
@@ -553,18 +567,12 @@ const CategoryClientWrapper = () => {
                 required
               />
               <input
-                type="text"
-                placeholder="Link (optional)"
-                value={subForm.subcategoryLink}
+                type="number"
+                min="1"
+                placeholder="Index (optional, e.g. 2)"
+                value={subForm.position}
                 onChange={(e) =>
-                  setSubForm({ ...subForm, subcategoryLink: e.target.value })
-                }
-              />
-              <textarea
-                placeholder="Detail (optional)"
-                value={subForm.detail}
-                onChange={(e) =>
-                  setSubForm({ ...subForm, detail: e.target.value })
+                  setSubForm({ ...subForm, position: e.target.value })
                 }
               />
               <div className={styles.createActions}>
