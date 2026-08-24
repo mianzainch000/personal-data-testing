@@ -1,5 +1,6 @@
 "use client";
 import styles from "@/css/ItemCard.module.css";
+import DynamicDataCard from "@/components/DynamicDataCard";
 
 const ItemCard = ({ item }) => {
   return (
@@ -20,6 +21,7 @@ const ItemCard = ({ item }) => {
             🔗 Open Link
           </a>
         )}
+        {item.config?.table && <DynamicDataCard item={item} />}
       </div>
     </div>
   );

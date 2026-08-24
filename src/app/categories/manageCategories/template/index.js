@@ -19,13 +19,36 @@ const emptySubForm = {
   detail: "",
   position: "",
 };
+const emptyItemConfig = {
+  table: false,
+  tabs: false,
+  dragDrop: false,
+  pagination: false,
+  search: false,
+  filter: false,
+  pdf: false,
+  json: false,
+};
 const emptyItemForm = {
   title: "",
   subheading: "",
   detail: "",
   link: "",
   position: "",
+  config: emptyItemConfig,
+  fields: [],
 };
+
+// Extra widgets, only shown once "Table" is checked.
+const WIDGET_OPTIONS = [
+  { key: "tabs", label: "Tabs (multiple groups, e.g. Meter 1 / Meter 2)" },
+  { key: "dragDrop", label: "Drag & drop se rows reorder karo" },
+  { key: "pagination", label: "Pagination (user apni marzi se rows/page chunay)" },
+  { key: "search", label: "Search box" },
+  { key: "filter", label: "Filter (column ke hisab se)" },
+  { key: "pdf", label: "PDF download button" },
+  { key: "json", label: "JSON download button" },
+];
 
 const CategoryClientWrapper = () => {
   const showAlertMessage = useSnackbar();
@@ -51,6 +74,8 @@ const CategoryClientWrapper = () => {
   const [showItemForm, setShowItemForm] = useState(false);
   const [itemForm, setItemForm] = useState(emptyItemForm);
   const [editingItemId, setEditingItemId] = useState(null);
+  const [newFieldLabel, setNewFieldLabel] = useState("");
+  const [newFieldType, setNewFieldType] = useState("text");
 
   const [deleteTarget, setDeleteTarget] = useState(null); // { type, id, message }
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -298,6 +323,8 @@ const CategoryClientWrapper = () => {
   const openCreateItem = () => {
     setItemForm(emptyItemForm);
     setEditingItemId(null);
+    setNewFieldLabel("");
+    setNewFieldType("text");
     setShowItemForm(true);
   };
 
@@ -311,8 +338,16 @@ const CategoryClientWrapper = () => {
         item.order !== undefined && item.order !== null
           ? String(item.order + 1)
           : "",
+      config: { ...emptyItemConfig, ...(item.config || {}) },
+      fields: (item.fields || []).map((f) => ({
+        _id: f._id,
+        label: f.label,
+        type: f.type || "text",
+      })),
     });
     setEditingItemId(item._id);
+    setNewFieldLabel("");
+    setNewFieldType("text");
     setShowItemForm(true);
   };
 
@@ -324,7 +359,8 @@ const CategoryClientWrapper = () => {
       itemForm.title.trim() ||
       itemForm.subheading.trim() ||
       itemForm.detail.trim() ||
-      itemForm.link.trim();
+      itemForm.link.trim() ||
+      itemForm.fields.length > 0;
 
     if (!hasAnyValue) {
       showAlertMessage({
@@ -622,6 +658,118 @@ const CategoryClientWrapper = () => {
                   setItemForm({ ...itemForm, detail: e.target.value })
                 }
               />
+
+              <div className={styles.widgetSection}>
+                <label className={styles.widgetSectionLabel}>
+                  <input
+                    type="checkbox"
+                    checked={itemForm.config.table}
+                    onChange={(e) =>
+                      setItemForm({
+                        ...itemForm,
+                        config: {
+                          ...itemForm.config,
+                          table: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                  📊 Table (is card mein dynamic responsive table dikhao)
+                </label>
+
+                {itemForm.config.table && (
+                  <>
+                    <div className={styles.checkboxGrid}>
+                      {WIDGET_OPTIONS.map((opt) => (
+                        <label key={opt.key} className={styles.checkboxItem}>
+                          <input
+                            type="checkbox"
+                            checked={itemForm.config[opt.key]}
+                            onChange={(e) =>
+                              setItemForm({
+                                ...itemForm,
+                                config: {
+                                  ...itemForm.config,
+                                  [opt.key]: e.target.checked,
+                                },
+                              })
+                            }
+                          />
+                          {opt.label}
+                        </label>
+                      ))}
+                    </div>
+
+                    <div className={styles.fieldsBuilder}>
+                      <p className={styles.fieldsBuilderLabel}>
+                        Table ke columns / fields (jo marzi naam rakho):
+                      </p>
+
+                      {itemForm.fields.length > 0 && (
+                        <div className={styles.fieldChips}>
+                          {itemForm.fields.map((f, idx) => (
+                            <span
+                              key={f._id || `new-${idx}`}
+                              className={styles.fieldChip}
+                            >
+                              {f.label} <em>({f.type})</em>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setItemForm({
+                                    ...itemForm,
+                                    fields: itemForm.fields.filter(
+                                      (_, i) => i !== idx,
+                                    ),
+                                  })
+                                }
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className={styles.inlineRow}>
+                        <input
+                          type="text"
+                          placeholder="Field name (e.g. Month, Reading, Amount)"
+                          value={newFieldLabel}
+                          onChange={(e) => setNewFieldLabel(e.target.value)}
+                        />
+                        <select
+                          value={newFieldType}
+                          onChange={(e) => setNewFieldType(e.target.value)}
+                        >
+                          <option value="text">Text</option>
+                          <option value="number">Number</option>
+                          <option value="date">Date</option>
+                        </select>
+                        <button
+                          type="button"
+                          className={styles.ghostBtn}
+                          onClick={() => {
+                            if (!newFieldLabel.trim()) return;
+                            setItemForm({
+                              ...itemForm,
+                              fields: [
+                                ...itemForm.fields,
+                                { label: newFieldLabel.trim(), type: newFieldType },
+                              ],
+                            });
+                            setNewFieldLabel("");
+                            setNewFieldType("text");
+                          }}
+                        >
+                          + Add Field
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
               <input
                 type="text"
                 placeholder="Link (optional)"

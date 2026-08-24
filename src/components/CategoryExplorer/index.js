@@ -23,8 +23,7 @@ const CategoryExplorer = ({ categoryId, subcategoryId = null }) => {
           `/categories/manageCategories/subcategories/api?categoryId=${categoryId}`,
         ),
         axios.get(
-          `/categories/items/api?categoryId=${categoryId}${
-            subcategoryId ? `&subcategoryId=${subcategoryId}` : ""
+          `/categories/items/api?categoryId=${categoryId}${subcategoryId ? `&subcategoryId=${subcategoryId}` : ""
           }`,
         ),
       ]);
@@ -51,7 +50,7 @@ const CategoryExplorer = ({ categoryId, subcategoryId = null }) => {
     <div className={itemStyles.pageContainer}>
       {!subcategoryId && subcategories.length > 0 && (
         <>
-          <h3 className={itemStyles.sectionLabel}>Subheadings</h3>
+
           <div className="categorie-grid">
             {subcategories.map((sub) => (
               <Link
