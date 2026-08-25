@@ -15,9 +15,13 @@
 }
 
 .th {
-  padding: 12px;
+  padding: 13px 12px;
   text-align: center;
-  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-primary);
   border: 1px solid var(--color-ghost-hover);
 }
 
@@ -25,6 +29,10 @@
   color: var(--text-primary);
   transition: background 0.2s ease;
   background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+.tr:hover {
+  background-color: var(--color-ghost) !important;
 }
 
 .td {

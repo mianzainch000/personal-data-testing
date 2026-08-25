@@ -1,9 +1,3 @@
-.wrapper {
-  margin-top: 1rem;
-  text-align: left;
-  width: 100%;
-}
-
 .emptyHint {
   margin-top: 0.8rem;
   font-size: 0.85rem;
@@ -11,124 +5,28 @@
   text-align: left;
 }
 
-.tabsRow {
+.addTabRow {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.8rem;
+  justify-content: flex-start;
+  margin-bottom: 14px;
 }
 
-.tabChip {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.8rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  background: var(--color-ghost);
-  color: var(--text-primary);
-  border: 1px solid var(--color-ghost-hover);
-}
-
-.tabChip span {
+.tabIcon {
   cursor: pointer;
-}
-
-.tabChip em {
-  font-style: normal;
-  cursor: pointer;
-  opacity: 0.7;
+  opacity: 0.75;
   font-size: 0.8rem;
+  margin-left: 6px;
 }
 
-.tabChip em:hover {
+.tabIcon:hover {
   opacity: 1;
-}
-
-.tabChipActive {
-  background: var(--color-primary);
-  color: var(--text-inverse);
-  border-color: var(--color-primary);
-}
-
-.addTabBtn {
-  border: 1px dashed var(--color-ghost-hover);
-  background: transparent;
-  color: var(--color-primary);
-  font-weight: 600;
-  font-size: 0.85rem;
-  padding: 0.45rem 0.8rem;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.addTabBtn:hover {
-  background: var(--color-ghost);
-}
-
-.controlsRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.searchWrap {
-  flex: 1;
-  min-width: 180px;
-}
-
-.searchWrap input {
-  margin: 0 !important;
-  max-width: none !important;
-  width: 100% !important;
-}
-
-.filterWrap {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.filterSelect {
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  color: var(--text-primary);
-  background: var(--card-bg);
-  border: 1px solid var(--color-ghost-hover);
-}
-
-.actionButtons {
-  display: flex;
-  gap: 0.6rem;
-  align-items: center;
-  margin-left: auto;
-}
-
-.addRowBtn {
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.85rem;
-  padding: 0.55rem 1rem;
-  border-radius: 8px;
-  color: var(--text-inverse);
-  background-color: var(--color-primary);
-}
-
-.addRowBtn:hover {
-  opacity: 0.9;
 }
 
 .modalOverlay {
   position: fixed;
   inset: 0;
   z-index: 999;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -138,10 +36,10 @@
 .modal {
   width: 100%;
   max-width: 400px;
-  padding: 1.5rem;
-  border-radius: 14px;
+  padding: 1.7rem 1.6rem;
+  border-radius: 16px;
   background: var(--bg-main);
-  box-shadow: var(--card-shadow);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
   position: relative;
   text-align: left;
   max-height: 90vh;
@@ -150,34 +48,40 @@
 
 .modalClose {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 14px;
+  right: 14px;
   border: none;
   background: var(--color-danger);
   color: #fff;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.9rem;
+  transition: opacity 0.2s ease;
+}
+
+.modalClose:hover {
+  opacity: 0.85;
 }
 
 .modalTitle {
-  margin: 0 0 1rem;
-  font-size: 1.1rem;
+  margin: 0 0 1.2rem;
+  font-size: 1.15rem;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
 .modalForm {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 1rem;
 }
 
 .modalField {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.35rem;
 }
 
 .modalField label {
@@ -188,41 +92,34 @@
 }
 
 .modalField input {
-  padding: 0.6rem 0.7rem;
+  padding: 0.7rem 0.8rem;
   border-radius: 8px;
   font-size: 0.9rem;
   color: var(--text-primary);
   background: var(--color-ghost);
   border: 1px solid var(--color-ghost-hover);
+  transition: border-color 0.2s ease;
 }
 
 .modalField input:focus {
-  outline: 2px solid var(--color-primary);
+  outline: none;
+  border-color: var(--color-primary);
 }
 
 .modalSubmit {
   border: none;
   cursor: pointer;
   font-weight: 600;
-  padding: 0.7rem;
+  font-size: 0.95rem;
+  padding: 0.75rem;
   border-radius: 8px;
   color: var(--text-inverse);
   background-color: var(--color-primary);
   margin-top: 0.4rem;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .modalSubmit:hover {
   opacity: 0.9;
-}
-
-@media (max-width: 600px) {
-  .controlsRow {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .actionButtons {
-    margin-left: 0;
-    justify-content: flex-end;
-  }
+  transform: translateY(-1px);
 }

@@ -16,6 +16,10 @@ const categorySchema = new mongoose.Schema(
       default: "",
     },
 
+    // When true, this category is hidden everywhere (dropdown + main page)
+    // unless the user logged in with the correct special code (req.user.hasAccess).
+    protected: { type: Boolean, default: false },
+
     order: { type: Number, default: 0 },
     userId: { type: Schema.Types.ObjectId, ref: "user", required: true },
   },

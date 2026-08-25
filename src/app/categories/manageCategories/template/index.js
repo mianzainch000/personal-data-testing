@@ -12,6 +12,7 @@ const emptyCategoryForm = {
   categoryLink: "",
   detail: "",
   position: "",
+  protected: false,
 };
 const emptySubForm = {
   subcategoryName: "",
@@ -167,6 +168,7 @@ const CategoryClientWrapper = () => {
         selectedCategory.order !== undefined && selectedCategory.order !== null
           ? String(selectedCategory.order + 1)
           : "",
+      protected: Boolean(selectedCategory.protected),
     });
     setEditingCategory(true);
     setShowCategoryForm(true);
@@ -457,6 +459,7 @@ const CategoryClientWrapper = () => {
           <option value="">— Select —</option>
           {categories.map((c) => (
             <option key={c._id} value={c._id}>
+              {c.protected ? "🔒 " : ""}
               {c.categoryName}
             </option>
           ))}
@@ -520,6 +523,20 @@ const CategoryClientWrapper = () => {
                 })
               }
             />
+            <label className={styles.widgetSectionLabel}>
+              <input
+                type="checkbox"
+                checked={categoryForm.protected}
+                onChange={(e) =>
+                  setCategoryForm({
+                    ...categoryForm,
+                    protected: e.target.checked,
+                  })
+                }
+              />
+              🔒 Protect (login par special code na dalein to ye category
+              dropdown/main page mein na dikhe)
+            </label>
             <div className={styles.createActions}>
               <button type="submit" className={styles.editBtn}>
                 {editingCategory ? "Update" : "Create"}

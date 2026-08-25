@@ -3,7 +3,10 @@ const Subcategory = require("../models/subcategorySchema");
 
 exports.getCategories = async (req, res) => {
   try {
-    const categories = await Category.find({ userId: req.user._id }).sort({
+    const filter = { userId: req.user._id };
+    if (req.user?.hasAccess !== true) filter.protected = { $ne: true };
+
+    const categories = await Category.find(filter).sort({
       order: 1,
       createdAt: 1,
     });
@@ -15,7 +18,8 @@ exports.getCategories = async (req, res) => {
 
 exports.createCategory = async (req, res) => {
   try {
-    const { categoryName, categoryLink, detail, position } = req.body;
+    const { categoryName, categoryLink, detail, position, protected: isProtected } =
+      req.body;
 
     if (!categoryName || !String(categoryName).trim()) {
       return res
@@ -40,6 +44,7 @@ exports.createCategory = async (req, res) => {
       categoryName,
       categoryLink: categoryLink || "",
       detail: detail || "",
+      protected: Boolean(isProtected),
       userId: req.user._id,
       order: insertOrder,
     });
@@ -56,7 +61,8 @@ exports.createCategory = async (req, res) => {
 
 exports.updateCategory = async (req, res) => {
   try {
-    const { position, categoryName, categoryLink, detail } = req.body;
+    const { position, categoryName, categoryLink, detail, protected: isProtected } =
+      req.body;
 
     const category = await Category.findOne({
       _id: req.params.id,
@@ -88,6 +94,7 @@ exports.updateCategory = async (req, res) => {
     if (categoryName !== undefined) category.categoryName = categoryName;
     if (categoryLink !== undefined) category.categoryLink = categoryLink;
     if (detail !== undefined) category.detail = detail;
+    if (isProtected !== undefined) category.protected = Boolean(isProtected);
 
     await category.save();
 

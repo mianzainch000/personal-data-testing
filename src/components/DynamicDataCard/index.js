@@ -5,12 +5,13 @@ import autoTable from "jspdf-autotable";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Table from "@/components/Table";
 import Pagination from "@/components/Pagination";
-import SearchBar from "@/components/SearchBar";
 import ConfirmModal from "@/components/ConfirmModal";
+import Button from "@/components/Button";
 import { useSnackbar } from "@/components/Snackbar";
 import handleAxiosError from "@/components/HandleAxiosError";
-import styles from "@/css/DynamicDataCard.module.css";
+import mr from "@/css/MeterRading.module.css";
 import tableStyles from "@/css/Table.module.css";
+import styles from "@/css/DynamicDataCard.module.css";
 
 const emptyRowFormFrom = (fields) =>
   Object.fromEntries(fields.map((f) => [String(f._id), ""]));
@@ -314,7 +315,7 @@ const DynamicDataCard = ({ item }) => {
   }
 
   return (
-    <div className={styles.wrapper}>
+    <div className={mr.container} style={{ maxWidth: "100%", textAlign: "left" }}>
       <ConfirmModal
         isOpen={showDeleteModal}
         title="Confirm Delete"
@@ -334,142 +335,147 @@ const DynamicDataCard = ({ item }) => {
       />
 
       {config.tabs && (
-        <div className={styles.tabsRow}>
+        <div className={styles.addTabRow}>
+          <Button variant="primary" onClick={openAddTab}>
+            + Add Tab
+          </Button>
+        </div>
+      )}
+
+      {config.tabs && tabs.length > 0 && (
+        <div className={mr.tabs}>
           {tabs.map((t) => (
             <div
               key={t._id}
-              className={`${styles.tabChip} ${
-                t._id === activeTabId ? styles.tabChipActive : ""
-              }`}
+              className={`${mr.tab} ${t._id === activeTabId ? mr.active : ""}`}
+              onClick={() => setActiveTabId(t._id)}
             >
-              <span onClick={() => setActiveTabId(t._id)}>
-                {t.tabName || "Untitled"}
-              </span>
-              <em onClick={() => openRenameTab(t)} title="Rename">
+              <span>{t.tabName || "Untitled"}</span>
+              <span
+                className={styles.tabIcon}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openRenameTab(t);
+                }}
+                title="Rename"
+              >
                 ✏️
-              </em>
-              <em
-                onClick={() => {
+              </span>
+              <span
+                className={styles.tabIcon}
+                onClick={(e) => {
+                  e.stopPropagation();
                   setDeleteTarget({ type: "tab", id: t._id });
                   setShowDeleteModal(true);
                 }}
                 title="Delete"
               >
                 🗑️
-              </em>
+              </span>
             </div>
           ))}
-          <button type="button" className={styles.addTabBtn} onClick={openAddTab}>
-            + Add Tab
-          </button>
         </div>
       )}
 
       {!config.tabs || activeTab ? (
         <>
-          <div className={styles.controlsRow}>
-            {config.search && (
-              <div className={styles.searchWrap}>
-                <SearchBar
-                  value={search}
-                  onChange={setSearch}
-                  placeholder="Search..."
-                />
-              </div>
-            )}
-
-            {config.filter && (
-              <div className={styles.filterWrap}>
-                <select
-                  value={filterFieldId}
-                  onChange={(e) => {
-                    setFilterFieldId(e.target.value);
-                    setFilterValue("All");
-                  }}
-                  className={styles.filterSelect}
+          <div className={mr.buttonGroup}>
+            {(config.pdf || config.json) &&
+              (config.pdf && config.json ? (
+                <div
+                  className={tableStyles.splitButtonContainer}
+                  ref={exportWrapRef}
                 >
-                  <option value="">Filter by…</option>
-                  {fields.map((f) => (
-                    <option key={f._id} value={String(f._id)}>
-                      {f.label}
-                    </option>
-                  ))}
-                </select>
-                {filterFieldId && (
-                  <select
-                    value={filterValue}
-                    onChange={(e) => setFilterValue(e.target.value)}
-                    className={styles.filterSelect}
-                  >
-                    <option value="All">All</option>
-                    {filterOptions.map((v) => (
-                      <option key={v} value={v}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-            )}
-
-            <div className={styles.actionButtons}>
-              {(config.pdf || config.json) &&
-                (config.pdf && config.json ? (
-                  <div
-                    className={tableStyles.splitButtonContainer}
-                    ref={exportWrapRef}
-                  >
-                    <button
-                      type="button"
-                      className={tableStyles.pdfButton}
-                      onClick={exportPdf}
-                    >
-                      ⬇ PDF
-                    </button>
-                    <button
-                      type="button"
-                      className={tableStyles.arrowButton}
-                      onClick={() => setShowExportMenu((s) => !s)}
-                    >
-                      ▾
-                    </button>
-                    {showExportMenu && (
-                      <div className={tableStyles.dropdownMenu}>
-                        <div
-                          className={tableStyles.dropdownItem}
-                          onClick={() => {
-                            exportJson();
-                            setShowExportMenu(false);
-                          }}
-                        >
-                          ⬇ Download JSON
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : config.pdf ? (
-                  <button
-                    type="button"
+                  <Button
+                    variant="danger"
                     className={tableStyles.pdfButton}
                     onClick={exportPdf}
                   >
-                    ⬇ PDF Report
-                  </button>
-                ) : (
+                    ⬇ PDF
+                  </Button>
                   <button
                     type="button"
-                    className={tableStyles.pdfButton}
-                    onClick={exportJson}
+                    className={tableStyles.arrowButton}
+                    onClick={() => setShowExportMenu((s) => !s)}
                   >
-                    ⬇ JSON
+                    ▾
                   </button>
-                ))}
+                  {showExportMenu && (
+                    <div className={tableStyles.dropdownMenu}>
+                      <div
+                        className={tableStyles.dropdownItem}
+                        onClick={() => {
+                          exportJson();
+                          setShowExportMenu(false);
+                        }}
+                      >
+                        ⬇ Download JSON
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : config.pdf ? (
+                <Button variant="danger" onClick={exportPdf}>
+                  ⬇ PDF Report
+                </Button>
+              ) : (
+                <Button variant="danger" onClick={exportJson}>
+                  ⬇ JSON
+                </Button>
+              ))}
 
-              <button type="button" className={styles.addRowBtn} onClick={openAddRow}>
-                + Add Row
-              </button>
-            </div>
+            <Button variant="primary" onClick={openAddRow}>
+              + Add Row
+            </Button>
           </div>
+
+          {(config.search || config.filter) && (
+            <div className={mr.filters}>
+              {config.search && (
+                <input
+                  type="text"
+                  className={mr.filterInput}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search..."
+                />
+              )}
+
+              {config.filter && (
+                <>
+                  <select
+                    value={filterFieldId}
+                    onChange={(e) => {
+                      setFilterFieldId(e.target.value);
+                      setFilterValue("All");
+                    }}
+                    className={mr.filterSelect}
+                  >
+                    <option value="">Filter by…</option>
+                    {fields.map((f) => (
+                      <option key={f._id} value={String(f._id)}>
+                        {f.label}
+                      </option>
+                    ))}
+                  </select>
+                  {filterFieldId && (
+                    <select
+                      value={filterValue}
+                      onChange={(e) => setFilterValue(e.target.value)}
+                      className={mr.filterSelect}
+                    >
+                      <option value="All">All</option>
+                      {filterOptions.map((v) => (
+                        <option key={v} value={v}>
+                          {v}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
           <Table
             columns={columns}
