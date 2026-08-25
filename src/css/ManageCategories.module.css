@@ -512,6 +512,19 @@
   border-top: 1px dashed var(--color-ghost-hover);
 }
 
+.widgetGridCaption {
+  margin: 0.7rem 0 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--color-primary);
+}
+
+.checkboxIcon {
+  display: inline-block;
+  width: 1.1em;
+}
+
 .widgetSectionLabel {
   display: flex;
   align-items: center;
@@ -579,6 +592,11 @@
   font-size: 0.78rem;
   background-color: var(--color-primary);
   color: var(--text-inverse);
+}
+
+.fieldChipEditing {
+  outline: 2px solid var(--color-danger);
+  outline-offset: 2px;
 }
 
 .fieldChip em {

@@ -3,14 +3,37 @@ const Subcategory = require("../models/subcategorySchema");
 
 exports.getCategories = async (req, res) => {
   try {
-    const filter = { userId: req.user._id };
-    if (req.user?.hasAccess !== true) filter.protected = { $ne: true };
-
-    const categories = await Category.find(filter).sort({
+    const all = await Category.find({ userId: req.user._id }).sort({
       order: 1,
       createdAt: 1,
     });
-    res.status(200).json({ success: true, data: categories });
+
+    const hasAccess = req.user?.hasAccess === true;
+    // Minutes elapsed since this session's special code was verified (JWT iat).
+    const minutesSinceUnlock = req.user?.iat
+      ? (Date.now() / 1000 - req.user.iat) / 60
+      : Infinity;
+
+    let hasHiddenProtected = false;
+    const categories = all.filter((c) => {
+      if (!c.protected) return true;
+      if (!hasAccess) {
+        hasHiddenProtected = true;
+        return false;
+      }
+      if (
+        c.protectTimeoutMinutes &&
+        minutesSinceUnlock >= c.protectTimeoutMinutes
+      ) {
+        hasHiddenProtected = true;
+        return false;
+      }
+      return true;
+    });
+
+    res
+      .status(200)
+      .json({ success: true, data: categories, meta: { hasHiddenProtected } });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -18,8 +41,14 @@ exports.getCategories = async (req, res) => {
 
 exports.createCategory = async (req, res) => {
   try {
-    const { categoryName, categoryLink, detail, position, protected: isProtected } =
-      req.body;
+    const {
+      categoryName,
+      categoryLink,
+      detail,
+      position,
+      protected: isProtected,
+      protectTimeoutMinutes,
+    } = req.body;
 
     if (!categoryName || !String(categoryName).trim()) {
       return res
@@ -45,6 +74,10 @@ exports.createCategory = async (req, res) => {
       categoryLink: categoryLink || "",
       detail: detail || "",
       protected: Boolean(isProtected),
+      protectTimeoutMinutes:
+        isProtected && protectTimeoutMinutes
+          ? Number(protectTimeoutMinutes)
+          : null,
       userId: req.user._id,
       order: insertOrder,
     });
@@ -61,8 +94,14 @@ exports.createCategory = async (req, res) => {
 
 exports.updateCategory = async (req, res) => {
   try {
-    const { position, categoryName, categoryLink, detail, protected: isProtected } =
-      req.body;
+    const {
+      position,
+      categoryName,
+      categoryLink,
+      detail,
+      protected: isProtected,
+      protectTimeoutMinutes,
+    } = req.body;
 
     const category = await Category.findOne({
       _id: req.params.id,
@@ -95,6 +134,12 @@ exports.updateCategory = async (req, res) => {
     if (categoryLink !== undefined) category.categoryLink = categoryLink;
     if (detail !== undefined) category.detail = detail;
     if (isProtected !== undefined) category.protected = Boolean(isProtected);
+    if (protectTimeoutMinutes !== undefined) {
+      category.protectTimeoutMinutes =
+        category.protected && protectTimeoutMinutes
+          ? Number(protectTimeoutMinutes)
+          : null;
+    }
 
     await category.save();
 

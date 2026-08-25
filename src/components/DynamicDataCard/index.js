@@ -27,8 +27,8 @@ const DynamicDataCard = ({ item }) => {
   const [search, setSearch] = useState("");
   const [filterFieldId, setFilterFieldId] = useState("");
   const [filterValue, setFilterValue] = useState("All");
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [customOptions, setCustomOptions] = useState([5, 10, 25, 50]);
+  const [rowsPerPage, setRowsPerPage] = useState("all");
+  const [customOptions, setCustomOptions] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
 
   const [showRowModal, setShowRowModal] = useState(false);
@@ -43,6 +43,9 @@ const DynamicDataCard = ({ item }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const exportWrapRef = useRef(null);
+  const importFileRef = useRef(null);
+  const [pendingImportTabs, setPendingImportTabs] = useState(null);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
 
   // Re-sync local state whenever a different item is rendered.
   useEffect(() => {
@@ -305,6 +308,99 @@ const DynamicDataCard = ({ item }) => {
     URL.revokeObjectURL(url);
   };
 
+  // ---------- Export/Import backup (full-fidelity, re-importable) ----------
+  const exportBackup = () => {
+    const backup = {
+      type: "personal-data-backup",
+      itemTitle: item.title || "",
+      exportedAt: new Date().toISOString(),
+      fields: fields.map((f) => ({
+        id: String(f._id),
+        label: f.label,
+        type: f.type,
+      })),
+      tabs: tabs.map((t) => ({
+        tabName: t.tabName || "",
+        order: t.order ?? 0,
+        rows: (t.rows || []).map((r) => ({
+          order: r.order ?? 0,
+          // key by field label so it survives re-import even into a card
+          // whose field _ids differ (e.g. after re-creating the card)
+          values: Object.fromEntries(
+            fields.map((f) => [f.label, r.values?.[String(f._id)] ?? ""]),
+          ),
+        })),
+      })),
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${fileBaseName()}-backup.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportFile = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        const importedTabs = Array.isArray(parsed.tabs) ? parsed.tabs : [];
+
+        // Map imported values (keyed by field label) onto this card's current field ids.
+        const labelToId = Object.fromEntries(
+          fields.map((f) => [f.label.trim().toLowerCase(), String(f._id)]),
+        );
+
+        const nextTabs = importedTabs.map((t) => ({
+          tabName: t.tabName || "",
+          order: t.order ?? 0,
+          rows: (t.rows || []).map((r) => {
+            const values = {};
+            Object.entries(r.values || {}).forEach(([label, val]) => {
+              const fid = labelToId[String(label).trim().toLowerCase()];
+              if (fid) values[fid] = val;
+            });
+            return { order: r.order ?? 0, values };
+          }),
+        }));
+
+        if (!nextTabs.length) {
+          showAlertMessage?.({
+            message: "Is file mein koi data nahi mila.",
+            type: "error",
+          });
+          return;
+        }
+
+        setPendingImportTabs(nextTabs);
+        setShowImportConfirm(true);
+      } catch (err) {
+        showAlertMessage?.({
+          message: "Ye file valid backup JSON nahi hai.",
+          type: "error",
+        });
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const confirmImport = async () => {
+    if (pendingImportTabs) {
+      const saved = await persistTabs(pendingImportTabs);
+      if (saved) setActiveTabId(saved[0]?._id);
+    }
+    setShowImportConfirm(false);
+    setPendingImportTabs(null);
+  };
+
   if (!fields.length) {
     return (
       <p className={styles.emptyHint}>
@@ -331,6 +427,18 @@ const DynamicDataCard = ({ item }) => {
         onCancel={() => {
           setShowDeleteModal(false);
           setDeleteTarget(null);
+        }}
+      />
+
+      <ConfirmModal
+        isOpen={showImportConfirm}
+        title="Import Restore"
+        message="Ye file ka data current tabs ke saath merge karke overwrite kar dega (same naam wale fields match ho jayenge). Continue?"
+        confirmText="Yes, Import"
+        onConfirm={confirmImport}
+        onCancel={() => {
+          setShowImportConfirm(false);
+          setPendingImportTabs(null);
         }}
       />
 
@@ -427,6 +535,27 @@ const DynamicDataCard = ({ item }) => {
             <Button variant="primary" onClick={openAddRow}>
               + Add Row
             </Button>
+
+            {config.exportJson && (
+              <>
+                <Button variant="ghost" onClick={exportBackup}>
+                  🧳 Export
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => importFileRef.current?.click()}
+                >
+                  📥 Import
+                </Button>
+                <input
+                  ref={importFileRef}
+                  type="file"
+                  accept=".json,application/json"
+                  style={{ display: "none" }}
+                  onChange={handleImportFile}
+                />
+              </>
+            )}
           </div>
 
           {(config.search || config.filter) && (
@@ -541,14 +670,19 @@ const DynamicDataCard = ({ item }) => {
             <form onSubmit={submitRowModal} className={styles.modalForm}>
               {fields.map((f) => (
                 <div key={f._id} className={styles.modalField}>
-                  <label>{f.label}</label>
+                  <label>
+                    {f.type === "encrypt" && "🔒 "}
+                    {f.label}
+                  </label>
                   <input
                     type={
                       f.type === "number"
                         ? "number"
                         : f.type === "date"
                           ? "date"
-                          : "text"
+                          : f.type === "email"
+                            ? "email"
+                            : "text"
                     }
                     value={rowForm[String(f._id)] ?? ""}
                     onChange={(e) =>

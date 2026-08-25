@@ -6,7 +6,7 @@ const itemFieldSchema = new Schema({
   label: { type: String, trim: true, required: true },
   type: {
     type: String,
-    enum: ["text", "number", "date"],
+    enum: ["text", "number", "date", "email", "encrypt"],
     default: "text",
   },
 });

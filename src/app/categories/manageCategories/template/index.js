@@ -4,6 +4,7 @@ import Loader from "@/components/Loader";
 import { useState, useEffect } from "react";
 import { useSnackbar } from "@/components/Snackbar";
 import ConfirmModal from "@/components/ConfirmModal";
+import UnlockProtected from "@/components/UnlockProtected";
 import handleAxiosError from "@/components/HandleAxiosError";
 import styles from "@/css/ManageCategories.module.css";
 
@@ -13,6 +14,7 @@ const emptyCategoryForm = {
   detail: "",
   position: "",
   protected: false,
+  protectTimeoutMinutes: "",
 };
 const emptySubForm = {
   subcategoryName: "",
@@ -29,6 +31,7 @@ const emptyItemConfig = {
   filter: false,
   pdf: false,
   json: false,
+  exportJson: false,
 };
 const emptyItemForm = {
   title: "",
@@ -42,13 +45,14 @@ const emptyItemForm = {
 
 // Extra widgets, only shown once "Table" is checked.
 const WIDGET_OPTIONS = [
-  { key: "tabs", label: "Tabs (multiple groups, e.g. Meter 1 / Meter 2)" },
-  { key: "dragDrop", label: "Drag & drop se rows reorder karo" },
-  { key: "pagination", label: "Pagination (user apni marzi se rows/page chunay)" },
-  { key: "search", label: "Search box" },
-  { key: "filter", label: "Filter (column ke hisab se)" },
-  { key: "pdf", label: "PDF download button" },
-  { key: "json", label: "JSON download button" },
+  { key: "tabs", icon: "📁", label: "Tabs" },
+  { key: "dragDrop", icon: "🔀", label: "Drag & Drop Reorder" },
+  { key: "pagination", icon: "🔢", label: "Pagination" },
+  { key: "pdf", icon: "📄", label: "PDF Download" },
+  { key: "json", icon: "📃", label: "JSON Download" },
+  { key: "exportJson", icon: "🧳", label: "Export / Import (JSON backup)" },
+  { key: "search", icon: "🔍", label: "Search" },
+  { key: "filter", icon: "🎛️", label: "Filter" },
 ];
 
 const CategoryClientWrapper = () => {
@@ -58,6 +62,7 @@ const CategoryClientWrapper = () => {
 
   // Step 1 - Categories
   const [categories, setCategories] = useState([]);
+  const [hasHiddenProtected, setHasHiddenProtected] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [categoryForm, setCategoryForm] = useState(emptyCategoryForm);
@@ -77,6 +82,7 @@ const CategoryClientWrapper = () => {
   const [editingItemId, setEditingItemId] = useState(null);
   const [newFieldLabel, setNewFieldLabel] = useState("");
   const [newFieldType, setNewFieldType] = useState("text");
+  const [editingFieldIndex, setEditingFieldIndex] = useState(null);
 
   const [deleteTarget, setDeleteTarget] = useState(null); // { type, id, message }
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -92,6 +98,7 @@ const CategoryClientWrapper = () => {
       const res = await axios.get("manageCategories/api");
       const list = res?.data?.data || [];
       setCategories(list);
+      setHasHiddenProtected(Boolean(res?.data?.meta?.hasHiddenProtected));
       if (!keepSelection || !list.some((c) => c._id === selectedCategoryId)) {
         setSelectedCategoryId(list[0]?._id || "");
       }
@@ -169,6 +176,9 @@ const CategoryClientWrapper = () => {
           ? String(selectedCategory.order + 1)
           : "",
       protected: Boolean(selectedCategory.protected),
+      protectTimeoutMinutes: selectedCategory.protectTimeoutMinutes
+        ? String(selectedCategory.protectTimeoutMinutes)
+        : "",
     });
     setEditingCategory(true);
     setShowCategoryForm(true);
@@ -193,9 +203,9 @@ const CategoryClientWrapper = () => {
       const res =
         editingCategory && selectedCategoryId
           ? await axios.put(
-              `manageCategories/api/${selectedCategoryId}`,
-              payload,
-            )
+            `manageCategories/api/${selectedCategoryId}`,
+            payload,
+          )
           : await axios.post("manageCategories/api", payload);
 
       showAlertMessage({
@@ -248,7 +258,7 @@ const CategoryClientWrapper = () => {
       detail: selectedSubcategory.detail || "",
       position:
         selectedSubcategory.order !== undefined &&
-        selectedSubcategory.order !== null
+          selectedSubcategory.order !== null
           ? String(selectedSubcategory.order + 1)
           : "",
     });
@@ -275,9 +285,9 @@ const CategoryClientWrapper = () => {
       const res =
         editingSubcategory && selectedSubcategoryId
           ? await axios.put(
-              `manageCategories/subcategories/api/${selectedSubcategoryId}`,
-              payload,
-            )
+            `manageCategories/subcategories/api/${selectedSubcategoryId}`,
+            payload,
+          )
           : await axios.post("manageCategories/subcategories/api", payload);
 
       showAlertMessage({
@@ -327,6 +337,7 @@ const CategoryClientWrapper = () => {
     setEditingItemId(null);
     setNewFieldLabel("");
     setNewFieldType("text");
+    setEditingFieldIndex(null);
     setShowItemForm(true);
   };
 
@@ -350,6 +361,7 @@ const CategoryClientWrapper = () => {
     setEditingItemId(item._id);
     setNewFieldLabel("");
     setNewFieldType("text");
+    setEditingFieldIndex(null);
     setShowItemForm(true);
   };
 
@@ -444,6 +456,10 @@ const CategoryClientWrapper = () => {
         }}
       />
 
+      {hasHiddenProtected && (
+        <UnlockProtected onUnlocked={() => fetchCategories(false)} />
+      )}
+
       {/* Step 1: Category */}
       <div className={styles.stepCard}>
         <p className={styles.stepTitle}>
@@ -537,6 +553,23 @@ const CategoryClientWrapper = () => {
               🔒 Protect (login par special code na dalein to ye category
               dropdown/main page mein na dikhe)
             </label>
+
+            {categoryForm.protected && (
+              <div className={styles.inlineRow} style={{ marginTop: "0.5rem" }}>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="Auto-lock after kitne minute? (khali chhoro to poori session tak dikhegi)"
+                  value={categoryForm.protectTimeoutMinutes}
+                  onChange={(e) =>
+                    setCategoryForm({
+                      ...categoryForm,
+                      protectTimeoutMinutes: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            )}
             <div className={styles.createActions}>
               <button type="submit" className={styles.editBtn}>
                 {editingCategory ? "Update" : "Create"}
@@ -696,6 +729,10 @@ const CategoryClientWrapper = () => {
 
                 {itemForm.config.table && (
                   <>
+                    <p className={styles.widgetGridCaption}>
+                      Advanced Detail Card (optional) — Table, Tabs, PDF/JSON,
+                      Pagination, Search, Filter
+                    </p>
                     <div className={styles.checkboxGrid}>
                       {WIDGET_OPTIONS.map((opt) => (
                         <label key={opt.key} className={styles.checkboxItem}>
@@ -712,6 +749,7 @@ const CategoryClientWrapper = () => {
                               })
                             }
                           />
+                          <span className={styles.checkboxIcon}>{opt.icon}</span>
                           {opt.label}
                         </label>
                       ))}
@@ -727,19 +765,40 @@ const CategoryClientWrapper = () => {
                           {itemForm.fields.map((f, idx) => (
                             <span
                               key={f._id || `new-${idx}`}
-                              className={styles.fieldChip}
+                              className={`${styles.fieldChip} ${editingFieldIndex === idx
+                                  ? styles.fieldChipEditing
+                                  : ""
+                                }`}
                             >
+                              {f.type === "encrypt" && "🔒 "}
                               {f.label} <em>({f.type})</em>
                               <button
                                 type="button"
-                                onClick={() =>
+                                title="Edit"
+                                onClick={() => {
+                                  setEditingFieldIndex(idx);
+                                  setNewFieldLabel(f.label);
+                                  setNewFieldType(f.type || "text");
+                                }}
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                type="button"
+                                title="Delete"
+                                onClick={() => {
                                   setItemForm({
                                     ...itemForm,
                                     fields: itemForm.fields.filter(
                                       (_, i) => i !== idx,
                                     ),
-                                  })
-                                }
+                                  });
+                                  if (editingFieldIndex === idx) {
+                                    setEditingFieldIndex(null);
+                                    setNewFieldLabel("");
+                                    setNewFieldType("text");
+                                  }
+                                }}
                               >
                                 ✕
                               </button>
@@ -762,25 +821,58 @@ const CategoryClientWrapper = () => {
                           <option value="text">Text</option>
                           <option value="number">Number</option>
                           <option value="date">Date</option>
+                          <option value="email">Email</option>
+                          <option value="encrypt">
+                            🔒 Encrypt (DB mein encrypted, UI mein plain)
+                          </option>
                         </select>
                         <button
                           type="button"
                           className={styles.ghostBtn}
                           onClick={() => {
                             if (!newFieldLabel.trim()) return;
-                            setItemForm({
-                              ...itemForm,
-                              fields: [
-                                ...itemForm.fields,
-                                { label: newFieldLabel.trim(), type: newFieldType },
-                              ],
-                            });
+                            if (editingFieldIndex !== null) {
+                              setItemForm({
+                                ...itemForm,
+                                fields: itemForm.fields.map((f, i) =>
+                                  i === editingFieldIndex
+                                    ? {
+                                      ...f,
+                                      label: newFieldLabel.trim(),
+                                      type: newFieldType,
+                                    }
+                                    : f,
+                                ),
+                              });
+                              setEditingFieldIndex(null);
+                            } else {
+                              setItemForm({
+                                ...itemForm,
+                                fields: [
+                                  ...itemForm.fields,
+                                  { label: newFieldLabel.trim(), type: newFieldType },
+                                ],
+                              });
+                            }
                             setNewFieldLabel("");
                             setNewFieldType("text");
                           }}
                         >
-                          + Add Field
+                          {editingFieldIndex !== null ? "Update Field" : "+ Add Field"}
                         </button>
+                        {editingFieldIndex !== null && (
+                          <button
+                            type="button"
+                            className={styles.deleteBtn}
+                            onClick={() => {
+                              setEditingFieldIndex(null);
+                              setNewFieldLabel("");
+                              setNewFieldType("text");
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        )}
                       </div>
                     </div>
                   </>

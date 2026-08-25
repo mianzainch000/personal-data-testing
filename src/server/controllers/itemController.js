@@ -1,4 +1,56 @@
 const Item = require("../models/itemSchema");
+const { encrypt, decrypt } = require("../helper/authFunction");
+
+// _id strings (as strings) of fields whose type is "encrypt".
+const encryptFieldIds = (fields = []) =>
+  new Set(
+    (fields || [])
+      .filter((f) => f.type === "encrypt")
+      .map((f) => String(f._id)),
+  );
+
+// Encrypts values for encrypt-type fields across all tabs/rows before saving.
+const encryptTabsValues = (tabs = [], fields = []) => {
+  const ids = encryptFieldIds(fields);
+  if (!ids.size) return tabs;
+  return (tabs || []).map((t) => ({
+    ...t,
+    rows: (t.rows || []).map((r) => {
+      const values = { ...(r.values || {}) };
+      ids.forEach((fid) => {
+        const v = values[fid];
+        if (v !== undefined && v !== null && v !== "") {
+          values[fid] = encrypt(String(v));
+        }
+      });
+      return { ...r, values };
+    }),
+  }));
+};
+
+// Decrypts values for encrypt-type fields — only ever used to build API
+// responses, never written back to the database.
+const decryptTabsValues = (tabs = [], fields = []) => {
+  const ids = encryptFieldIds(fields);
+  if (!ids.size) return tabs;
+  return (tabs || []).map((t) => ({
+    ...t,
+    rows: (t.rows || []).map((r) => {
+      const values = { ...(r.values || {}) };
+      ids.forEach((fid) => {
+        const v = values[fid];
+        if (v) {
+          try {
+            values[fid] = decrypt(v);
+          } catch (e) {
+            // Leave as-is (e.g. legacy plaintext saved before this field existed).
+          }
+        }
+      });
+      return { ...r, values };
+    }),
+  }));
+};
 
 exports.getItems = async (req, res) => {
   try {
@@ -15,7 +67,13 @@ exports.getItems = async (req, res) => {
 
     const items = await Item.find(filter).sort({ order: 1, createdAt: 1 });
 
-    res.status(200).json({ success: true, data: items });
+    const data = items.map((it) => {
+      const obj = it.toObject();
+      obj.tabs = decryptTabsValues(obj.tabs, obj.fields);
+      return obj;
+    });
+
+    res.status(200).json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -139,7 +197,7 @@ exports.updateItem = async (req, res) => {
     if (link !== undefined) item.link = link;
     if (config !== undefined) item.config = config;
     if (fields !== undefined) item.fields = fields;
-    if (tabs !== undefined) item.tabs = tabs;
+    if (tabs !== undefined) item.tabs = encryptTabsValues(tabs, item.fields);
 
     const hasFields = Array.isArray(item.fields) && item.fields.length > 0;
 
@@ -158,9 +216,12 @@ exports.updateItem = async (req, res) => {
 
     await item.save();
 
+    const responseData = item.toObject();
+    responseData.tabs = decryptTabsValues(responseData.tabs, responseData.fields);
+
     res.status(200).json({
       success: true,
-      data: item,
+      data: responseData,
       message: "Card updated successfully",
     });
   } catch (err) {

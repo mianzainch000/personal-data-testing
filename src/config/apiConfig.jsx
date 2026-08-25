@@ -6,6 +6,7 @@ export const apiConfig = {
   resetPassword: "resetPassword",
   getSettings: "get-settings",
   updateSettings: "update-settings",
+  verifySpecialCode: "verifySpecialCode",
   category: {
     get: "getCategories",
     post: "createCategory",
