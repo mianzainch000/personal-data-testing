@@ -71,6 +71,7 @@ const itemSchema = new mongoose.Schema(
       filter: { type: Boolean, default: false },
       pdf: { type: Boolean, default: false },
       json: { type: Boolean, default: false },
+      exportJson: { type: Boolean, default: false },
     },
     fields: { type: [itemFieldSchema], default: [] },
     tabs: { type: [itemTabSchema], default: [] },

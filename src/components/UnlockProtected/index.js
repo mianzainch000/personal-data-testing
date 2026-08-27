@@ -5,7 +5,9 @@ import { useSnackbar } from "@/components/Snackbar";
 import handleAxiosError from "@/components/HandleAxiosError";
 import styles from "@/css/DynamicDataCard.module.css";
 
-const UnlockProtected = ({ onUnlocked }) => {
+// Always rendered the same way whether or not any category is actually
+// protected/hidden, so its presence never hints that secret content exists.
+const UnlockProtected = () => {
   const showAlertMessage = useSnackbar();
   const [showModal, setShowModal] = useState(false);
   const [code, setCode] = useState("");
@@ -22,14 +24,10 @@ const UnlockProtected = ({ onUnlocked }) => {
       if (res?.data?.success) {
         setShowModal(false);
         setCode("");
-        showAlertMessage?.({
-          message: "Unlocked! Protected categories ab dikhengi.",
-          type: "success",
-        });
-        onUnlocked?.();
+        window.location.reload();
       } else {
         showAlertMessage?.({
-          message: res?.data?.message || "Incorrect special code",
+          message: res?.data?.message || "Incorrect code",
           type: "error",
         });
       }
@@ -43,18 +41,19 @@ const UnlockProtected = ({ onUnlocked }) => {
 
   return (
     <>
-      <p
+      <span
         onClick={() => setShowModal(true)}
+        title="Unlock"
         style={{
-          textAlign: "center",
+          display: "inline-block",
           cursor: "pointer",
-          fontSize: "0.85rem",
-          opacity: 0.75,
-          margin: "0 0 1rem",
+          fontSize: "0.9rem",
+          opacity: 0.35,
+          padding: "0.4rem",
         }}
       >
-        🔒 Kuch protected categories chupi hain — special code dalein
-      </p>
+        🔓
+      </span>
 
       {showModal && (
         <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
@@ -66,10 +65,9 @@ const UnlockProtected = ({ onUnlocked }) => {
             >
               ✕
             </button>
-            <h3 className={styles.modalTitle}>🔒 Enter Special Code</h3>
+            <h3 className={styles.modalTitle}>Enter Code</h3>
             <form onSubmit={submit} className={styles.modalForm}>
               <div className={styles.modalField}>
-                <label>Special Code</label>
                 <input
                   type="password"
                   autoFocus
@@ -79,7 +77,7 @@ const UnlockProtected = ({ onUnlocked }) => {
                 />
               </div>
               <button type="submit" className={styles.modalSubmit} disabled={loading}>
-                {loading ? "Checking..." : "Unlock"}
+                {loading ? "..." : "Submit"}
               </button>
             </form>
           </div>

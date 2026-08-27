@@ -14,26 +14,19 @@ exports.getCategories = async (req, res) => {
       ? (Date.now() / 1000 - req.user.iat) / 60
       : Infinity;
 
-    let hasHiddenProtected = false;
     const categories = all.filter((c) => {
       if (!c.protected) return true;
-      if (!hasAccess) {
-        hasHiddenProtected = true;
-        return false;
-      }
+      if (!hasAccess) return false;
       if (
         c.protectTimeoutMinutes &&
         minutesSinceUnlock >= c.protectTimeoutMinutes
       ) {
-        hasHiddenProtected = true;
         return false;
       }
       return true;
     });
 
-    res
-      .status(200)
-      .json({ success: true, data: categories, meta: { hasHiddenProtected } });
+    res.status(200).json({ success: true, data: categories });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

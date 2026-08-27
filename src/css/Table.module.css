@@ -47,6 +47,10 @@
   justify-content: center;
 }
 
+.tdActions span {
+  cursor: pointer;
+}
+
 .hideOnMobile {
   display: table-cell;
 }

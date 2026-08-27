@@ -9,28 +9,28 @@ import { useEffect, useState } from "react";
 const Categories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [hasHiddenProtected, setHasHiddenProtected] = useState(false);
-
-  const fetchCategories = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get("/categories/manageCategories/api");
-      setCategories(res?.data?.data || []);
-      setHasHiddenProtected(Boolean(res?.data?.meta?.hasHiddenProtected));
-    } catch (error) {
-      setCategories([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
+    const fetchCategories = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get("/categories/manageCategories/api");
+        setCategories(res?.data?.data || []);
+      } catch {
+        setCategories([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchCategories();
   }, []);
 
   return (
     <div className="categorie-container">
-      <h2 className="categorie-heading">My Categories</h2>
+      <h2 className="categorie-heading">
+        My Categories <UnlockProtected />
+      </h2>
 
       <Link
         href="categories/manageCategories"
@@ -42,10 +42,6 @@ const Categories = () => {
       <br />
 
       {loading && <Loader />}
-
-      {!loading && hasHiddenProtected && (
-        <UnlockProtected onUnlocked={fetchCategories} />
-      )}
 
       {!loading && categories.length === 0 && (
         <p style={{ textAlign: "center", opacity: 0.8 }}>

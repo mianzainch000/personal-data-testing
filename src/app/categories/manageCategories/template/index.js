@@ -45,7 +45,7 @@ const emptyItemForm = {
 
 // Extra widgets, only shown once "Table" is checked.
 const WIDGET_OPTIONS = [
-  { key: "tabs", icon: "📁", label: "Tabs" },
+  { key: "tabs", icon: "📁", label: "Tabs (Meter 1 / Meter 2 jaisi groups)" },
   { key: "dragDrop", icon: "🔀", label: "Drag & Drop Reorder" },
   { key: "pagination", icon: "🔢", label: "Pagination" },
   { key: "pdf", icon: "📄", label: "PDF Download" },
@@ -62,7 +62,6 @@ const CategoryClientWrapper = () => {
 
   // Step 1 - Categories
   const [categories, setCategories] = useState([]);
-  const [hasHiddenProtected, setHasHiddenProtected] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [categoryForm, setCategoryForm] = useState(emptyCategoryForm);
@@ -98,7 +97,6 @@ const CategoryClientWrapper = () => {
       const res = await axios.get("manageCategories/api");
       const list = res?.data?.data || [];
       setCategories(list);
-      setHasHiddenProtected(Boolean(res?.data?.meta?.hasHiddenProtected));
       if (!keepSelection || !list.some((c) => c._id === selectedCategoryId)) {
         setSelectedCategoryId(list[0]?._id || "");
       }
@@ -203,9 +201,9 @@ const CategoryClientWrapper = () => {
       const res =
         editingCategory && selectedCategoryId
           ? await axios.put(
-            `manageCategories/api/${selectedCategoryId}`,
-            payload,
-          )
+              `manageCategories/api/${selectedCategoryId}`,
+              payload,
+            )
           : await axios.post("manageCategories/api", payload);
 
       showAlertMessage({
@@ -258,7 +256,7 @@ const CategoryClientWrapper = () => {
       detail: selectedSubcategory.detail || "",
       position:
         selectedSubcategory.order !== undefined &&
-          selectedSubcategory.order !== null
+        selectedSubcategory.order !== null
           ? String(selectedSubcategory.order + 1)
           : "",
     });
@@ -285,9 +283,9 @@ const CategoryClientWrapper = () => {
       const res =
         editingSubcategory && selectedSubcategoryId
           ? await axios.put(
-            `manageCategories/subcategories/api/${selectedSubcategoryId}`,
-            payload,
-          )
+              `manageCategories/subcategories/api/${selectedSubcategoryId}`,
+              payload,
+            )
           : await axios.post("manageCategories/subcategories/api", payload);
 
       showAlertMessage({
@@ -456,15 +454,11 @@ const CategoryClientWrapper = () => {
         }}
       />
 
-      {hasHiddenProtected && (
-        <UnlockProtected onUnlocked={() => fetchCategories(false)} />
-      )}
-
       {/* Step 1: Category */}
       <div className={styles.stepCard}>
         <p className={styles.stepTitle}>
           <span className={styles.stepBadge}>1</span>
-          Select a Category (Heading)
+          Select a Category (Heading) <UnlockProtected />
         </p>
 
         <select
@@ -765,10 +759,11 @@ const CategoryClientWrapper = () => {
                           {itemForm.fields.map((f, idx) => (
                             <span
                               key={f._id || `new-${idx}`}
-                              className={`${styles.fieldChip} ${editingFieldIndex === idx
+                              className={`${styles.fieldChip} ${
+                                editingFieldIndex === idx
                                   ? styles.fieldChipEditing
                                   : ""
-                                }`}
+                              }`}
                             >
                               {f.type === "encrypt" && "🔒 "}
                               {f.label} <em>({f.type})</em>
@@ -837,10 +832,10 @@ const CategoryClientWrapper = () => {
                                 fields: itemForm.fields.map((f, i) =>
                                   i === editingFieldIndex
                                     ? {
-                                      ...f,
-                                      label: newFieldLabel.trim(),
-                                      type: newFieldType,
-                                    }
+                                        ...f,
+                                        label: newFieldLabel.trim(),
+                                        type: newFieldType,
+                                      }
                                     : f,
                                 ),
                               });

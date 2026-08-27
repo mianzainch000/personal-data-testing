@@ -95,6 +95,17 @@
   text-align: center;
 }
 
+.titleLink {
+  display: block;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--color-primary);
+}
+
+.titleLink:hover {
+  text-decoration: underline;
+}
+
 .subheading {
   margin: 0.2rem 0 0;
   font-size: 0.85rem;

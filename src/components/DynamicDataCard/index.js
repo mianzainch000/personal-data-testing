@@ -2,6 +2,7 @@
 import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { createPortal } from "react-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Table from "@/components/Table";
 import Pagination from "@/components/Pagination";
@@ -382,7 +383,7 @@ const DynamicDataCard = ({ item }) => {
 
         setPendingImportTabs(nextTabs);
         setShowImportConfirm(true);
-      } catch (err) {
+      } catch {
         showAlertMessage?.({
           message: "Ye file valid backup JSON nahi hai.",
           type: "error",
@@ -483,6 +484,14 @@ const DynamicDataCard = ({ item }) => {
             </div>
           ))}
         </div>
+      )}
+
+      {config.tabs && tabs.length === 0 && (
+        <p className={styles.emptyHint}>
+          Abhi tak koi tab nahi hai. Data add karne ke liye upar{" "}
+          <strong>+ Add Tab</strong> par click karein (jaise &quot;Meter
+          1&quot;).
+        </p>
       )}
 
       {!config.tabs || activeTab ? (
@@ -652,85 +661,91 @@ const DynamicDataCard = ({ item }) => {
       ) : null}
 
       {/* Add / Edit Row modal */}
-      {showRowModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowRowModal(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className={styles.modalClose}
-              onClick={() => setShowRowModal(false)}
-            >
-              ✕
-            </button>
-            <h3 className={styles.modalTitle}>
-              {editingRowId
-                ? "Edit Row"
-                : `Add Row${activeTab?.tabName ? " – " + activeTab.tabName : ""}`}
-            </h3>
-            <form onSubmit={submitRowModal} className={styles.modalForm}>
-              {fields.map((f) => (
-                <div key={f._id} className={styles.modalField}>
-                  <label>
-                    {f.type === "encrypt" && "🔒 "}
-                    {f.label}
-                  </label>
-                  <input
-                    type={
-                      f.type === "number"
-                        ? "number"
-                        : f.type === "date"
-                          ? "date"
-                          : f.type === "email"
-                            ? "email"
-                            : "text"
-                    }
-                    value={rowForm[String(f._id)] ?? ""}
-                    onChange={(e) =>
-                      setRowForm({ ...rowForm, [String(f._id)]: e.target.value })
-                    }
-                  />
-                </div>
-              ))}
-              <button type="submit" className={styles.modalSubmit}>
-                Submit
+      {showRowModal &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className={styles.modalOverlay} onClick={() => setShowRowModal(false)}>
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={() => setShowRowModal(false)}
+              >
+                ✕
               </button>
-            </form>
-          </div>
-        </div>
-      )}
+              <h3 className={styles.modalTitle}>
+                {editingRowId
+                  ? "Edit Row"
+                  : `Add Row${activeTab?.tabName ? " – " + activeTab.tabName : ""}`}
+              </h3>
+              <form onSubmit={submitRowModal} className={styles.modalForm}>
+                {fields.map((f) => (
+                  <div key={f._id} className={styles.modalField}>
+                    <label>
+                      {f.type === "encrypt" && "🔒 "}
+                      {f.label}
+                    </label>
+                    <input
+                      type={
+                        f.type === "number"
+                          ? "number"
+                          : f.type === "date"
+                            ? "date"
+                            : f.type === "email"
+                              ? "email"
+                              : "text"
+                      }
+                      value={rowForm[String(f._id)] ?? ""}
+                      onChange={(e) =>
+                        setRowForm({ ...rowForm, [String(f._id)]: e.target.value })
+                      }
+                    />
+                  </div>
+                ))}
+                <button type="submit" className={styles.modalSubmit}>
+                  Submit
+                </button>
+              </form>
+            </div>
+          </div>,
+          document.body,
+        )}
 
       {/* Add / Rename Tab modal */}
-      {showTabModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowTabModal(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className={styles.modalClose}
-              onClick={() => setShowTabModal(false)}
-            >
-              ✕
-            </button>
-            <h3 className={styles.modalTitle}>
-              {editingTabId ? "Rename Tab" : "Add Tab"}
-            </h3>
-            <form onSubmit={submitTabModal} className={styles.modalForm}>
-              <div className={styles.modalField}>
-                <label>Tab Name</label>
-                <input
-                  type="text"
-                  autoFocus
-                  value={tabNameInput}
-                  onChange={(e) => setTabNameInput(e.target.value)}
-                  placeholder="e.g. Meter 1"
-                />
-              </div>
-              <button type="submit" className={styles.modalSubmit}>
-                Submit
+      {showTabModal &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className={styles.modalOverlay} onClick={() => setShowTabModal(false)}>
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={() => setShowTabModal(false)}
+              >
+                ✕
               </button>
-            </form>
-          </div>
-        </div>
-      )}
+              <h3 className={styles.modalTitle}>
+                {editingTabId ? "Rename Tab" : "Add Tab"}
+              </h3>
+              <form onSubmit={submitTabModal} className={styles.modalForm}>
+                <div className={styles.modalField}>
+                  <label>Tab Name</label>
+                  <input
+                    type="text"
+                    autoFocus
+                    value={tabNameInput}
+                    onChange={(e) => setTabNameInput(e.target.value)}
+                    placeholder="e.g. Meter 1"
+                  />
+                </div>
+                <button type="submit" className={styles.modalSubmit}>
+                  Submit
+                </button>
+              </form>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };
