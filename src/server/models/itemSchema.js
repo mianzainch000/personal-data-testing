@@ -20,6 +20,8 @@ const itemRowSchema = new Schema({
 // One tab (e.g. "Meter 1", "Meter 2") inside a detail card, each holding its own rows.
 const itemTabSchema = new Schema({
   tabName: { type: String, trim: true, default: "" },
+  detail: { type: String, trim: true, default: "" },
+  link: { type: String, trim: true, default: "" },
   order: { type: Number, default: 0 },
   rows: { type: [itemRowSchema], default: [] },
 });

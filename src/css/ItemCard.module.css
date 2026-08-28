@@ -96,14 +96,20 @@
 }
 
 .titleLink {
-  display: block;
-  cursor: pointer;
-  text-decoration: none;
-  color: var(--color-primary);
+  display: block !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  color: var(--color-primary) !important;
+}
+
+.titleLink:visited,
+.titleLink:hover,
+.titleLink:active {
+  color: var(--color-primary) !important;
 }
 
 .titleLink:hover {
-  text-decoration: underline;
+  text-decoration: underline !important;
 }
 
 .subheading {

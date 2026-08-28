@@ -38,6 +38,8 @@ const DynamicDataCard = ({ item }) => {
 
   const [showTabModal, setShowTabModal] = useState(false);
   const [tabNameInput, setTabNameInput] = useState("");
+  const [tabDetailInput, setTabDetailInput] = useState("");
+  const [tabLinkInput, setTabLinkInput] = useState("");
   const [editingTabId, setEditingTabId] = useState(null);
 
   const [deleteTarget, setDeleteTarget] = useState(null); // { type: 'row' | 'tab', id }
@@ -154,12 +156,16 @@ const DynamicDataCard = ({ item }) => {
   // ---------- Tabs ----------
   const openAddTab = () => {
     setTabNameInput("");
+    setTabDetailInput("");
+    setTabLinkInput("");
     setEditingTabId(null);
     setShowTabModal(true);
   };
 
   const openRenameTab = (tab) => {
     setTabNameInput(tab.tabName || "");
+    setTabDetailInput(tab.detail || "");
+    setTabLinkInput(tab.link || "");
     setEditingTabId(tab._id);
     setShowTabModal(true);
   };
@@ -168,16 +174,19 @@ const DynamicDataCard = ({ item }) => {
     e.preventDefault();
     if (!tabNameInput.trim()) return;
 
+    const tabPatch = {
+      tabName: tabNameInput.trim(),
+      detail: tabDetailInput.trim(),
+      link: tabLinkInput.trim(),
+    };
+
     let nextTabs;
     if (editingTabId) {
       nextTabs = tabs.map((t) =>
-        t._id === editingTabId ? { ...t, tabName: tabNameInput.trim() } : t,
+        t._id === editingTabId ? { ...t, ...tabPatch } : t,
       );
     } else {
-      nextTabs = [
-        ...tabs,
-        { tabName: tabNameInput.trim(), order: tabs.length, rows: [] },
-      ];
+      nextTabs = [...tabs, { ...tabPatch, order: tabs.length, rows: [] }];
     }
 
     const saved = await persistTabs(nextTabs);
@@ -290,23 +299,6 @@ const DynamicDataCard = ({ item }) => {
       ),
     });
     doc.save(`${fileBaseName()}.pdf`);
-  };
-
-  const exportJson = () => {
-    const payload = sortedRows.map((r) =>
-      Object.fromEntries(
-        fields.map((f) => [f.label, r.values?.[String(f._id)] ?? ""]),
-      ),
-    );
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${fileBaseName()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   // ---------- Export/Import backup (full-fidelity, re-importable) ----------
@@ -496,66 +488,73 @@ const DynamicDataCard = ({ item }) => {
 
       {!config.tabs || activeTab ? (
         <>
-          <div className={mr.buttonGroup}>
-            {(config.pdf || config.json) &&
-              (config.pdf && config.json ? (
-                <div
-                  className={tableStyles.splitButtonContainer}
-                  ref={exportWrapRef}
+          {activeTab && (activeTab.detail || activeTab.link) && (
+            <div className={mr.consumerInfo}>
+              {activeTab.detail && (
+                <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+                  {activeTab.detail}
+                </p>
+              )}
+              {activeTab.link && (
+                <a
+                  href={activeTab.link}
+                  className={styles.tabLink}
                 >
-                  <Button
-                    variant="danger"
-                    className={tableStyles.pdfButton}
-                    onClick={exportPdf}
-                  >
-                    ⬇ PDF
-                  </Button>
-                  <button
-                    type="button"
-                    className={tableStyles.arrowButton}
-                    onClick={() => setShowExportMenu((s) => !s)}
-                  >
-                    ▾
-                  </button>
-                  {showExportMenu && (
-                    <div className={tableStyles.dropdownMenu}>
+                  🔗 {activeTab.link}
+                </a>
+              )}
+            </div>
+          )}
+
+          <div className={mr.buttonGroup}>
+            {(config.pdf || config.exportJson) && (
+              <div
+                className={tableStyles.splitButtonContainer}
+                ref={exportWrapRef}
+              >
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowExportMenu((s) => !s)}
+                >
+                  ⬇ Options ▾
+                </Button>
+                {showExportMenu && (
+                  <div className={tableStyles.dropdownMenu}>
+                    {config.pdf && (
                       <div
                         className={tableStyles.dropdownItem}
                         onClick={() => {
-                          exportJson();
+                          exportPdf();
                           setShowExportMenu(false);
                         }}
                       >
-                        ⬇ Download JSON
+                        📄 PDF Report
                       </div>
-                    </div>
-                  )}
-                </div>
-              ) : config.pdf ? (
-                <Button variant="danger" onClick={exportPdf}>
-                  ⬇ PDF Report
-                </Button>
-              ) : (
-                <Button variant="danger" onClick={exportJson}>
-                  ⬇ JSON
-                </Button>
-              ))}
-
-            <Button variant="primary" onClick={openAddRow}>
-              + Add Row
-            </Button>
-
-            {config.exportJson && (
-              <>
-                <Button variant="ghost" onClick={exportBackup}>
-                  🧳 Export
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => importFileRef.current?.click()}
-                >
-                  📥 Import
-                </Button>
+                    )}
+                    {config.exportJson && (
+                      <div
+                        className={tableStyles.dropdownItem}
+                        onClick={() => {
+                          exportBackup();
+                          setShowExportMenu(false);
+                        }}
+                      >
+                        🧳 Export Backup
+                      </div>
+                    )}
+                    {config.exportJson && (
+                      <div
+                        className={tableStyles.dropdownItem}
+                        onClick={() => {
+                          setShowExportMenu(false);
+                          importFileRef.current?.click();
+                        }}
+                      >
+                        📥 Import Backup
+                      </div>
+                    )}
+                  </div>
+                )}
                 <input
                   ref={importFileRef}
                   type="file"
@@ -563,8 +562,12 @@ const DynamicDataCard = ({ item }) => {
                   style={{ display: "none" }}
                   onChange={handleImportFile}
                 />
-              </>
+              </div>
             )}
+
+            <Button variant="primary" onClick={openAddRow}>
+              + Add Row
+            </Button>
           </div>
 
           {(config.search || config.filter) && (
@@ -736,6 +739,24 @@ const DynamicDataCard = ({ item }) => {
                     value={tabNameInput}
                     onChange={(e) => setTabNameInput(e.target.value)}
                     placeholder="e.g. Meter 1"
+                  />
+                </div>
+                <div className={styles.modalField}>
+                  <label>Detail (optional — is tab ke liye alag note)</label>
+                  <textarea
+                    rows={3}
+                    value={tabDetailInput}
+                    onChange={(e) => setTabDetailInput(e.target.value)}
+                    placeholder="e.g. Consumer ID: 1234567890"
+                  />
+                </div>
+                <div className={styles.modalField}>
+                  <label>Website Link (optional)</label>
+                  <input
+                    type="text"
+                    value={tabLinkInput}
+                    onChange={(e) => setTabLinkInput(e.target.value)}
+                    placeholder="https://..."
                   />
                 </div>
                 <button type="submit" className={styles.modalSubmit}>

@@ -614,3 +614,36 @@
   line-height: 1;
   padding: 0;
 }
+
+/* ---- Content / Backup admin tab switcher ---- */
+.adminTabs {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+  margin: 0 auto 1.2rem;
+  max-width: 700px;
+  padding: 0 1rem;
+}
+
+.adminTabBtn {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--color-ghost-hover);
+  background-color: var(--color-ghost);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.adminTabBtn:hover {
+  background-color: var(--color-ghost-hover);
+}
+
+.adminTabActive {
+  background-color: var(--color-primary);
+  color: var(--text-inverse);
+  border-color: var(--color-primary);
+}

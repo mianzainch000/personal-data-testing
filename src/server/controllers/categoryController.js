@@ -1,5 +1,6 @@
 const Category = require("../models/categorySchema");
 const Subcategory = require("../models/subcategorySchema");
+const { isCategoryAccessible } = require("../helper/categoryAccess");
 
 exports.getCategories = async (req, res) => {
   try {
@@ -8,23 +9,7 @@ exports.getCategories = async (req, res) => {
       createdAt: 1,
     });
 
-    const hasAccess = req.user?.hasAccess === true;
-    // Minutes elapsed since this session's special code was verified (JWT iat).
-    const minutesSinceUnlock = req.user?.iat
-      ? (Date.now() / 1000 - req.user.iat) / 60
-      : Infinity;
-
-    const categories = all.filter((c) => {
-      if (!c.protected) return true;
-      if (!hasAccess) return false;
-      if (
-        c.protectTimeoutMinutes &&
-        minutesSinceUnlock >= c.protectTimeoutMinutes
-      ) {
-        return false;
-      }
-      return true;
-    });
+    const categories = all.filter((c) => isCategoryAccessible(c, req.user));
 
     res.status(200).json({ success: true, data: categories });
   } catch (err) {

@@ -6,14 +6,12 @@ const ItemCard = ({ item }) => {
   return (
     <div className={styles.card}>
       <div className={styles.cardHead}>
-        {item.link ? (
+        {item.link && item.title ? (
           <a
             href={item.link}
-            target="_blank"
-            rel="noopener noreferrer"
             className={`${styles.title} ${styles.titleLink}`}
           >
-            {item.title || item.link}
+            {item.title}
           </a>
         ) : (
           item.title && <p className={styles.title}>{item.title}</p>

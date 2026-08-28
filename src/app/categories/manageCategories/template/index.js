@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useSnackbar } from "@/components/Snackbar";
 import ConfirmModal from "@/components/ConfirmModal";
 import UnlockProtected from "@/components/UnlockProtected";
+import InlineSpinner from "@/components/InlineSpinner";
 import handleAxiosError from "@/components/HandleAxiosError";
 import styles from "@/css/ManageCategories.module.css";
 
@@ -49,7 +50,6 @@ const WIDGET_OPTIONS = [
   { key: "dragDrop", icon: "🔀", label: "Drag & Drop Reorder" },
   { key: "pagination", icon: "🔢", label: "Pagination" },
   { key: "pdf", icon: "📄", label: "PDF Download" },
-  { key: "json", icon: "📃", label: "JSON Download" },
   { key: "exportJson", icon: "🧳", label: "Export / Import (JSON backup)" },
   { key: "search", icon: "🔍", label: "Search" },
   { key: "filter", icon: "🎛️", label: "Filter" },
@@ -62,6 +62,10 @@ const CategoryClientWrapper = () => {
 
   // Step 1 - Categories
   const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [adminTab, setAdminTab] = useState("content");
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupResultMsg, setBackupResultMsg] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [categoryForm, setCategoryForm] = useState(emptyCategoryForm);
@@ -93,6 +97,7 @@ const CategoryClientWrapper = () => {
 
   // ---------- Fetchers ----------
   const fetchCategories = async (keepSelection = true) => {
+    setCategoriesLoading(true);
     try {
       const res = await axios.get("manageCategories/api");
       const list = res?.data?.data || [];
@@ -103,6 +108,8 @@ const CategoryClientWrapper = () => {
     } catch (error) {
       const { message } = handleAxiosError(error);
       showAlertMessage({ message, type: "error" });
+    } finally {
+      setCategoriesLoading(false);
     }
   };
 
@@ -438,6 +445,86 @@ const CategoryClientWrapper = () => {
     return deleteItem();
   };
 
+  // ---------- Backup (full app export/import) ----------
+  const downloadFullBackup = async () => {
+    setBackupLoading(true);
+    setBackupResultMsg("");
+    try {
+      const res = await axios.get("manageCategories/backup/api");
+      const backup = res?.data?.data;
+      const skipped = res?.data?.skippedProtectedCount || 0;
+      const blob = new Blob([JSON.stringify(backup, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `personal-data-backup-${new Date()
+        .toISOString()
+        .slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      if (skipped > 0) {
+        setBackupResultMsg(
+          `Backup ho gaya, lekin ${skipped} protected categor${
+            skipped === 1 ? "y" : "ies"
+          } is mein shamil NAHI hain (kyunke unlock nahi thi). 🔓 se code dal kar dobara download karein agar unhe bhi chahiye.`,
+        );
+        showAlertMessage({
+          message: `Backup ho gaya (${skipped} protected category skip hui).`,
+          type: "success",
+        });
+      } else {
+        showAlertMessage({
+          message: "Backup download ho gaya.",
+          type: "success",
+        });
+      }
+    } catch (error) {
+      const { message } = handleAxiosError(error);
+      showAlertMessage({ message, type: "error" });
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const importFullBackup = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      setBackupLoading(true);
+      setBackupResultMsg("");
+      try {
+        const backup = JSON.parse(reader.result);
+        const res = await axios.post("manageCategories/backup/api", {
+          backup,
+        });
+        if (res?.data?.success) {
+          setBackupResultMsg(res.data.message || "Import complete.");
+          showAlertMessage({ message: "Import ho gaya!", type: "success" });
+          await fetchCategories(false);
+        } else {
+          showAlertMessage({
+            message: res?.data?.message || "Import fail ho gaya.",
+            type: "error",
+          });
+        }
+      } catch {
+        showAlertMessage({
+          message: "Ye file valid backup JSON nahi hai.",
+          type: "error",
+        });
+      } finally {
+        setBackupLoading(false);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className={styles.pageWrap}>
       {loading && <Loader />}
@@ -454,26 +541,91 @@ const CategoryClientWrapper = () => {
         }}
       />
 
-      {/* Step 1: Category */}
+      <div className={styles.adminTabs}>
+        <button
+          type="button"
+          className={`${styles.adminTabBtn} ${
+            adminTab === "content" ? styles.adminTabActive : ""
+          }`}
+          onClick={() => setAdminTab("content")}
+        >
+          📂 Content
+        </button>
+        <button
+          type="button"
+          className={`${styles.adminTabBtn} ${
+            adminTab === "backup" ? styles.adminTabActive : ""
+          }`}
+          onClick={() => setAdminTab("backup")}
+        >
+          🧳 Backup
+        </button>
+      </div>
+
+      {adminTab === "backup" ? (
+        <div className={styles.stepCard}>
+          <p className={styles.stepTitle}>🧳 Full App Backup</p>
+          <p style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "1rem" }}>
+            Ye poori app ka data (sab categories, sub-headings, detail cards)
+            ek hi JSON file mein backup/restore karta hai. Import hamesha{" "}
+            <strong>naya data add</strong> karta hai — kuch bhi delete/overwrite
+            nahi karta.
+          </p>
+
+          <div className={styles.groupButtons}>
+            <button
+              type="button"
+              className={styles.editBtn}
+              disabled={backupLoading}
+              onClick={downloadFullBackup}
+            >
+              {backupLoading ? "Please wait..." : "⬇ Download Backup (JSON)"}
+            </button>
+
+            <label className={styles.ghostBtn} style={{ cursor: "pointer" }}>
+              📥 Import Backup (JSON)
+              <input
+                type="file"
+                accept=".json,application/json"
+                style={{ display: "none" }}
+                onChange={importFullBackup}
+                disabled={backupLoading}
+              />
+            </label>
+          </div>
+
+          {backupResultMsg && (
+            <p style={{ marginTop: "1rem", fontSize: "0.85rem" }}>
+              ✅ {backupResultMsg}
+            </p>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Step 1: Category */}
       <div className={styles.stepCard}>
         <p className={styles.stepTitle}>
           <span className={styles.stepBadge}>1</span>
           Select a Category (Heading) <UnlockProtected />
         </p>
 
-        <select
-          className={styles.select}
-          value={selectedCategoryId}
-          onChange={(e) => setSelectedCategoryId(e.target.value)}
-        >
-          <option value="">— Select —</option>
-          {categories.map((c) => (
-            <option key={c._id} value={c._id}>
-              {c.protected ? "🔒 " : ""}
-              {c.categoryName}
-            </option>
-          ))}
-        </select>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          <select
+            className={styles.select}
+            style={{ flex: 1 }}
+            value={selectedCategoryId}
+            onChange={(e) => setSelectedCategoryId(e.target.value)}
+          >
+            <option value="">— Select —</option>
+            {categories.map((c) => (
+              <option key={c._id} value={c._id}>
+                {c.protected ? "🔒 " : ""}
+                {c.categoryName}
+              </option>
+            ))}
+          </select>
+          {categoriesLoading && <InlineSpinner />}
+        </div>
 
         {selectedCategory && (
           <div className={styles.groupButtons}>
@@ -695,6 +847,22 @@ const CategoryClientWrapper = () => {
 
           {showItemForm && (
             <form className={styles.createPanel} onSubmit={submitItemForm}>
+              <input
+                type="text"
+                placeholder="Title (e.g. Link ka naam, jo link par click hoga)"
+                value={itemForm.title}
+                onChange={(e) =>
+                  setItemForm({ ...itemForm, title: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                placeholder="Subheading (optional)"
+                value={itemForm.subheading}
+                onChange={(e) =>
+                  setItemForm({ ...itemForm, subheading: e.target.value })
+                }
+              />
               <textarea
                 placeholder="Detail (optional)"
                 value={itemForm.detail}
@@ -975,6 +1143,8 @@ const CategoryClientWrapper = () => {
             ))}
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );
