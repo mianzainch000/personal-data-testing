@@ -3,6 +3,7 @@ import axios from "axios";
 import Link from "next/link";
 import Button from "@/components/Button";
 import Loader from "@/components/Loader";
+import UnlockProtected from "@/components/UnlockProtected";
 import { useEffect, useState } from "react";
 
 const Categories = () => {
@@ -15,7 +16,7 @@ const Categories = () => {
       try {
         const res = await axios.get("/categories/manageCategories/api");
         setCategories(res?.data?.data || []);
-      } catch (error) {
+      } catch {
         setCategories([]);
       } finally {
         setLoading(false);
@@ -27,7 +28,9 @@ const Categories = () => {
 
   return (
     <div className="categorie-container">
-      <h2 className="categorie-heading">My Categories</h2>
+      <h2 className="categorie-heading">
+        My Categories <UnlockProtected />
+      </h2>
 
       <Link
         href="categories/manageCategories"

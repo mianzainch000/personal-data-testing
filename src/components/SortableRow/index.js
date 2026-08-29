@@ -4,7 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import styles from "@/css/Table.module.css";
 import { useSortable } from "@dnd-kit/sortable";
 
-const SortableRow = ({ row, columns, renderActions }) => {
+const SortableRow = ({ row, columns, renderActions, dragEnabled = true }) => {
   const {
     attributes,
     listeners,
@@ -12,7 +12,7 @@ const SortableRow = ({ row, columns, renderActions }) => {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: row._id });
+  } = useSortable({ id: row._id, disabled: !dragEnabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -24,15 +24,16 @@ const SortableRow = ({ row, columns, renderActions }) => {
 
   return (
     <tr ref={setNodeRef} style={style} className={styles.tr}>
-      {}
-      <td
-        className={`${styles.td} ${styles.hideOnMobile}`}
-        {...attributes}
-        {...listeners}
-        style={{ cursor: "grab" }}
-      >
-        ⠿
-      </td>
+      {dragEnabled && (
+        <td
+          className={`${styles.td} ${styles.hideOnMobile}`}
+          {...attributes}
+          {...listeners}
+          style={{ cursor: "grab" }}
+        >
+          ⠿
+        </td>
+      )}
 
       {}
       {columns.map((col) => (

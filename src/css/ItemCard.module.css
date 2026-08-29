@@ -95,6 +95,23 @@
   text-align: center;
 }
 
+.titleLink {
+  display: block !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  color: var(--color-primary) !important;
+}
+
+.titleLink:visited,
+.titleLink:hover,
+.titleLink:active {
+  color: var(--color-primary) !important;
+}
+
+.titleLink:hover {
+  text-decoration: underline !important;
+}
+
 .subheading {
   margin: 0.2rem 0 0;
   font-size: 0.85rem;

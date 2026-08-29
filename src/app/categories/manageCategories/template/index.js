@@ -4,6 +4,8 @@ import Loader from "@/components/Loader";
 import { useState, useEffect } from "react";
 import { useSnackbar } from "@/components/Snackbar";
 import ConfirmModal from "@/components/ConfirmModal";
+import UnlockProtected from "@/components/UnlockProtected";
+import InlineSpinner from "@/components/InlineSpinner";
 import handleAxiosError from "@/components/HandleAxiosError";
 import styles from "@/css/ManageCategories.module.css";
 
@@ -12,6 +14,8 @@ const emptyCategoryForm = {
   categoryLink: "",
   detail: "",
   position: "",
+  protected: false,
+  protectTimeoutMinutes: "",
 };
 const emptySubForm = {
   subcategoryName: "",
@@ -19,13 +23,37 @@ const emptySubForm = {
   detail: "",
   position: "",
 };
+const emptyItemConfig = {
+  table: false,
+  tabs: false,
+  dragDrop: false,
+  pagination: false,
+  search: false,
+  filter: false,
+  pdf: false,
+  json: false,
+  exportJson: false,
+};
 const emptyItemForm = {
   title: "",
   subheading: "",
   detail: "",
   link: "",
   position: "",
+  config: emptyItemConfig,
+  fields: [],
 };
+
+// Extra widgets, only shown once "Table" is checked.
+const WIDGET_OPTIONS = [
+  { key: "tabs", icon: "📁", label: "Tabs (Meter 1 / Meter 2 jaisi groups)" },
+  { key: "dragDrop", icon: "🔀", label: "Drag & Drop Reorder" },
+  { key: "pagination", icon: "🔢", label: "Pagination" },
+  { key: "pdf", icon: "📄", label: "PDF Download" },
+  { key: "exportJson", icon: "🧳", label: "Export / Import (JSON backup)" },
+  { key: "search", icon: "🔍", label: "Search" },
+  { key: "filter", icon: "🎛️", label: "Filter" },
+];
 
 const CategoryClientWrapper = () => {
   const showAlertMessage = useSnackbar();
@@ -34,6 +62,10 @@ const CategoryClientWrapper = () => {
 
   // Step 1 - Categories
   const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [adminTab, setAdminTab] = useState("content");
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupResultMsg, setBackupResultMsg] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [categoryForm, setCategoryForm] = useState(emptyCategoryForm);
@@ -51,6 +83,9 @@ const CategoryClientWrapper = () => {
   const [showItemForm, setShowItemForm] = useState(false);
   const [itemForm, setItemForm] = useState(emptyItemForm);
   const [editingItemId, setEditingItemId] = useState(null);
+  const [newFieldLabel, setNewFieldLabel] = useState("");
+  const [newFieldType, setNewFieldType] = useState("text");
+  const [editingFieldIndex, setEditingFieldIndex] = useState(null);
 
   const [deleteTarget, setDeleteTarget] = useState(null); // { type, id, message }
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -62,6 +97,7 @@ const CategoryClientWrapper = () => {
 
   // ---------- Fetchers ----------
   const fetchCategories = async (keepSelection = true) => {
+    setCategoriesLoading(true);
     try {
       const res = await axios.get("manageCategories/api");
       const list = res?.data?.data || [];
@@ -72,6 +108,8 @@ const CategoryClientWrapper = () => {
     } catch (error) {
       const { message } = handleAxiosError(error);
       showAlertMessage({ message, type: "error" });
+    } finally {
+      setCategoriesLoading(false);
     }
   };
 
@@ -142,6 +180,10 @@ const CategoryClientWrapper = () => {
         selectedCategory.order !== undefined && selectedCategory.order !== null
           ? String(selectedCategory.order + 1)
           : "",
+      protected: Boolean(selectedCategory.protected),
+      protectTimeoutMinutes: selectedCategory.protectTimeoutMinutes
+        ? String(selectedCategory.protectTimeoutMinutes)
+        : "",
     });
     setEditingCategory(true);
     setShowCategoryForm(true);
@@ -298,6 +340,9 @@ const CategoryClientWrapper = () => {
   const openCreateItem = () => {
     setItemForm(emptyItemForm);
     setEditingItemId(null);
+    setNewFieldLabel("");
+    setNewFieldType("text");
+    setEditingFieldIndex(null);
     setShowItemForm(true);
   };
 
@@ -311,8 +356,17 @@ const CategoryClientWrapper = () => {
         item.order !== undefined && item.order !== null
           ? String(item.order + 1)
           : "",
+      config: { ...emptyItemConfig, ...(item.config || {}) },
+      fields: (item.fields || []).map((f) => ({
+        _id: f._id,
+        label: f.label,
+        type: f.type || "text",
+      })),
     });
     setEditingItemId(item._id);
+    setNewFieldLabel("");
+    setNewFieldType("text");
+    setEditingFieldIndex(null);
     setShowItemForm(true);
   };
 
@@ -324,7 +378,8 @@ const CategoryClientWrapper = () => {
       itemForm.title.trim() ||
       itemForm.subheading.trim() ||
       itemForm.detail.trim() ||
-      itemForm.link.trim();
+      itemForm.link.trim() ||
+      itemForm.fields.length > 0;
 
     if (!hasAnyValue) {
       showAlertMessage({
@@ -390,6 +445,86 @@ const CategoryClientWrapper = () => {
     return deleteItem();
   };
 
+  // ---------- Backup (full app export/import) ----------
+  const downloadFullBackup = async () => {
+    setBackupLoading(true);
+    setBackupResultMsg("");
+    try {
+      const res = await axios.get("manageCategories/backup/api");
+      const backup = res?.data?.data;
+      const skipped = res?.data?.skippedProtectedCount || 0;
+      const blob = new Blob([JSON.stringify(backup, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `personal-data-backup-${new Date()
+        .toISOString()
+        .slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      if (skipped > 0) {
+        setBackupResultMsg(
+          `Backup ho gaya, lekin ${skipped} protected categor${
+            skipped === 1 ? "y" : "ies"
+          } is mein shamil NAHI hain (kyunke unlock nahi thi). 🔓 se code dal kar dobara download karein agar unhe bhi chahiye.`,
+        );
+        showAlertMessage({
+          message: `Backup ho gaya (${skipped} protected category skip hui).`,
+          type: "success",
+        });
+      } else {
+        showAlertMessage({
+          message: "Backup download ho gaya.",
+          type: "success",
+        });
+      }
+    } catch (error) {
+      const { message } = handleAxiosError(error);
+      showAlertMessage({ message, type: "error" });
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const importFullBackup = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      setBackupLoading(true);
+      setBackupResultMsg("");
+      try {
+        const backup = JSON.parse(reader.result);
+        const res = await axios.post("manageCategories/backup/api", {
+          backup,
+        });
+        if (res?.data?.success) {
+          setBackupResultMsg(res.data.message || "Import complete.");
+          showAlertMessage({ message: "Import ho gaya!", type: "success" });
+          await fetchCategories(false);
+        } else {
+          showAlertMessage({
+            message: res?.data?.message || "Import fail ho gaya.",
+            type: "error",
+          });
+        }
+      } catch {
+        showAlertMessage({
+          message: "Ye file valid backup JSON nahi hai.",
+          type: "error",
+        });
+      } finally {
+        setBackupLoading(false);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className={styles.pageWrap}>
       {loading && <Loader />}
@@ -406,25 +541,91 @@ const CategoryClientWrapper = () => {
         }}
       />
 
-      {/* Step 1: Category */}
+      <div className={styles.adminTabs}>
+        <button
+          type="button"
+          className={`${styles.adminTabBtn} ${
+            adminTab === "content" ? styles.adminTabActive : ""
+          }`}
+          onClick={() => setAdminTab("content")}
+        >
+          📂 Content
+        </button>
+        <button
+          type="button"
+          className={`${styles.adminTabBtn} ${
+            adminTab === "backup" ? styles.adminTabActive : ""
+          }`}
+          onClick={() => setAdminTab("backup")}
+        >
+          🧳 Backup
+        </button>
+      </div>
+
+      {adminTab === "backup" ? (
+        <div className={styles.stepCard}>
+          <p className={styles.stepTitle}>🧳 Full App Backup</p>
+          <p style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "1rem" }}>
+            Ye poori app ka data (sab categories, sub-headings, detail cards)
+            ek hi JSON file mein backup/restore karta hai. Import hamesha{" "}
+            <strong>naya data add</strong> karta hai — kuch bhi delete/overwrite
+            nahi karta.
+          </p>
+
+          <div className={styles.groupButtons}>
+            <button
+              type="button"
+              className={styles.editBtn}
+              disabled={backupLoading}
+              onClick={downloadFullBackup}
+            >
+              {backupLoading ? "Please wait..." : "⬇ Download Backup (JSON)"}
+            </button>
+
+            <label className={styles.ghostBtn} style={{ cursor: "pointer" }}>
+              📥 Import Backup (JSON)
+              <input
+                type="file"
+                accept=".json,application/json"
+                style={{ display: "none" }}
+                onChange={importFullBackup}
+                disabled={backupLoading}
+              />
+            </label>
+          </div>
+
+          {backupResultMsg && (
+            <p style={{ marginTop: "1rem", fontSize: "0.85rem" }}>
+              ✅ {backupResultMsg}
+            </p>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Step 1: Category */}
       <div className={styles.stepCard}>
         <p className={styles.stepTitle}>
           <span className={styles.stepBadge}>1</span>
-          Select a Category (Heading)
+          Select a Category (Heading) <UnlockProtected />
         </p>
 
-        <select
-          className={styles.select}
-          value={selectedCategoryId}
-          onChange={(e) => setSelectedCategoryId(e.target.value)}
-        >
-          <option value="">— Select —</option>
-          {categories.map((c) => (
-            <option key={c._id} value={c._id}>
-              {c.categoryName}
-            </option>
-          ))}
-        </select>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          <select
+            className={styles.select}
+            style={{ flex: 1 }}
+            value={selectedCategoryId}
+            onChange={(e) => setSelectedCategoryId(e.target.value)}
+          >
+            <option value="">— Select —</option>
+            {categories.map((c) => (
+              <option key={c._id} value={c._id}>
+                {c.protected ? "🔒 " : ""}
+                {c.categoryName}
+              </option>
+            ))}
+          </select>
+          {categoriesLoading && <InlineSpinner />}
+        </div>
 
         {selectedCategory && (
           <div className={styles.groupButtons}>
@@ -484,6 +685,37 @@ const CategoryClientWrapper = () => {
                 })
               }
             />
+            <label className={styles.widgetSectionLabel}>
+              <input
+                type="checkbox"
+                checked={categoryForm.protected}
+                onChange={(e) =>
+                  setCategoryForm({
+                    ...categoryForm,
+                    protected: e.target.checked,
+                  })
+                }
+              />
+              🔒 Protect (login par special code na dalein to ye category
+              dropdown/main page mein na dikhe)
+            </label>
+
+            {categoryForm.protected && (
+              <div className={styles.inlineRow} style={{ marginTop: "0.5rem" }}>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="Auto-lock after kitne minute? (khali chhoro to poori session tak dikhegi)"
+                  value={categoryForm.protectTimeoutMinutes}
+                  onChange={(e) =>
+                    setCategoryForm({
+                      ...categoryForm,
+                      protectTimeoutMinutes: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            )}
             <div className={styles.createActions}>
               <button type="submit" className={styles.editBtn}>
                 {editingCategory ? "Update" : "Create"}
@@ -615,6 +847,22 @@ const CategoryClientWrapper = () => {
 
           {showItemForm && (
             <form className={styles.createPanel} onSubmit={submitItemForm}>
+              <input
+                type="text"
+                placeholder="Title (e.g. Link ka naam, jo link par click hoga)"
+                value={itemForm.title}
+                onChange={(e) =>
+                  setItemForm({ ...itemForm, title: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                placeholder="Subheading (optional)"
+                value={itemForm.subheading}
+                onChange={(e) =>
+                  setItemForm({ ...itemForm, subheading: e.target.value })
+                }
+              />
               <textarea
                 placeholder="Detail (optional)"
                 value={itemForm.detail}
@@ -622,6 +870,178 @@ const CategoryClientWrapper = () => {
                   setItemForm({ ...itemForm, detail: e.target.value })
                 }
               />
+
+              <div className={styles.widgetSection}>
+                <label className={styles.widgetSectionLabel}>
+                  <input
+                    type="checkbox"
+                    checked={itemForm.config.table}
+                    onChange={(e) =>
+                      setItemForm({
+                        ...itemForm,
+                        config: {
+                          ...itemForm.config,
+                          table: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                  📊 Table (is card mein dynamic responsive table dikhao)
+                </label>
+
+                {itemForm.config.table && (
+                  <>
+                    <p className={styles.widgetGridCaption}>
+                      Advanced Detail Card (optional) — Table, Tabs, PDF/JSON,
+                      Pagination, Search, Filter
+                    </p>
+                    <div className={styles.checkboxGrid}>
+                      {WIDGET_OPTIONS.map((opt) => (
+                        <label key={opt.key} className={styles.checkboxItem}>
+                          <input
+                            type="checkbox"
+                            checked={itemForm.config[opt.key]}
+                            onChange={(e) =>
+                              setItemForm({
+                                ...itemForm,
+                                config: {
+                                  ...itemForm.config,
+                                  [opt.key]: e.target.checked,
+                                },
+                              })
+                            }
+                          />
+                          <span className={styles.checkboxIcon}>{opt.icon}</span>
+                          {opt.label}
+                        </label>
+                      ))}
+                    </div>
+
+                    <div className={styles.fieldsBuilder}>
+                      <p className={styles.fieldsBuilderLabel}>
+                        Table ke columns / fields (jo marzi naam rakho):
+                      </p>
+
+                      {itemForm.fields.length > 0 && (
+                        <div className={styles.fieldChips}>
+                          {itemForm.fields.map((f, idx) => (
+                            <span
+                              key={f._id || `new-${idx}`}
+                              className={`${styles.fieldChip} ${
+                                editingFieldIndex === idx
+                                  ? styles.fieldChipEditing
+                                  : ""
+                              }`}
+                            >
+                              {f.type === "encrypt" && "🔒 "}
+                              {f.label} <em>({f.type})</em>
+                              <button
+                                type="button"
+                                title="Edit"
+                                onClick={() => {
+                                  setEditingFieldIndex(idx);
+                                  setNewFieldLabel(f.label);
+                                  setNewFieldType(f.type || "text");
+                                }}
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                type="button"
+                                title="Delete"
+                                onClick={() => {
+                                  setItemForm({
+                                    ...itemForm,
+                                    fields: itemForm.fields.filter(
+                                      (_, i) => i !== idx,
+                                    ),
+                                  });
+                                  if (editingFieldIndex === idx) {
+                                    setEditingFieldIndex(null);
+                                    setNewFieldLabel("");
+                                    setNewFieldType("text");
+                                  }
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className={styles.inlineRow}>
+                        <input
+                          type="text"
+                          placeholder="Field name (e.g. Month, Reading, Amount)"
+                          value={newFieldLabel}
+                          onChange={(e) => setNewFieldLabel(e.target.value)}
+                        />
+                        <select
+                          value={newFieldType}
+                          onChange={(e) => setNewFieldType(e.target.value)}
+                        >
+                          <option value="text">Text</option>
+                          <option value="number">Number</option>
+                          <option value="date">Date</option>
+                          <option value="email">Email</option>
+                          <option value="encrypt">
+                            🔒 Encrypt (DB mein encrypted, UI mein plain)
+                          </option>
+                        </select>
+                        <button
+                          type="button"
+                          className={styles.ghostBtn}
+                          onClick={() => {
+                            if (!newFieldLabel.trim()) return;
+                            if (editingFieldIndex !== null) {
+                              setItemForm({
+                                ...itemForm,
+                                fields: itemForm.fields.map((f, i) =>
+                                  i === editingFieldIndex
+                                    ? {
+                                        ...f,
+                                        label: newFieldLabel.trim(),
+                                        type: newFieldType,
+                                      }
+                                    : f,
+                                ),
+                              });
+                              setEditingFieldIndex(null);
+                            } else {
+                              setItemForm({
+                                ...itemForm,
+                                fields: [
+                                  ...itemForm.fields,
+                                  { label: newFieldLabel.trim(), type: newFieldType },
+                                ],
+                              });
+                            }
+                            setNewFieldLabel("");
+                            setNewFieldType("text");
+                          }}
+                        >
+                          {editingFieldIndex !== null ? "Update Field" : "+ Add Field"}
+                        </button>
+                        {editingFieldIndex !== null && (
+                          <button
+                            type="button"
+                            className={styles.deleteBtn}
+                            onClick={() => {
+                              setEditingFieldIndex(null);
+                              setNewFieldLabel("");
+                              setNewFieldType("text");
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
               <input
                 type="text"
                 placeholder="Link (optional)"
@@ -723,6 +1143,8 @@ const CategoryClientWrapper = () => {
             ))}
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

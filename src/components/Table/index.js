@@ -21,6 +21,7 @@ const Table = ({
   renderActions,
   emptyMessage = "No results found",
   isSearchActive = false,
+  dragEnabled = true,
 }) => {
   const [items, setItems] = useState([]);
   const sensors = useSensors(useSensor(PointerSensor));
@@ -52,12 +53,14 @@ const Table = ({
         <table className={styles.table}>
           <thead className={styles.thead}>
             <tr>
-              <th
-                className={`${styles.th} ${styles.hideOnMobile}`}
-                style={{ width: "50px" }}
-              >
-                Drag
-              </th>
+              {dragEnabled && (
+                <th
+                  className={`${styles.th} ${styles.hideOnMobile}`}
+                  style={{ width: "50px" }}
+                >
+                  Drag
+                </th>
+              )}
               {columns.map((col) => (
                 <th key={col.key} className={styles.th}>
                   {col.label}
@@ -70,7 +73,7 @@ const Table = ({
           <SortableContext
             items={items.map((i) => i._id)}
             strategy={verticalListSortingStrategy}
-            disabled={isSearchActive}
+            disabled={isSearchActive || !dragEnabled}
           >
             <tbody>
               {items.length > 0 ? (
@@ -80,12 +83,17 @@ const Table = ({
                     row={row}
                     columns={columns}
                     renderActions={renderActions}
+                    dragEnabled={dragEnabled}
                   />
                 ))
               ) : (
                 <tr>
                   <td
-                    colSpan={columns.length + 2}
+                    colSpan={
+                      columns.length +
+                      (dragEnabled ? 1 : 0) +
+                      (renderActions ? 1 : 0)
+                    }
                     style={{ textAlign: "center" }}
                   >
                     {emptyMessage}

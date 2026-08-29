@@ -1,4 +1,8 @@
 const Item = require("../models/itemSchema");
+const {
+  encryptTabsValues,
+  decryptTabsValues,
+} = require("../helper/itemCrypto");
 
 exports.getItems = async (req, res) => {
   try {
@@ -15,7 +19,13 @@ exports.getItems = async (req, res) => {
 
     const items = await Item.find(filter).sort({ order: 1, createdAt: 1 });
 
-    res.status(200).json({ success: true, data: items });
+    const data = items.map((it) => {
+      const obj = it.toObject();
+      obj.tabs = decryptTabsValues(obj.tabs, obj.fields);
+      return obj;
+    });
+
+    res.status(200).json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -23,8 +33,17 @@ exports.getItems = async (req, res) => {
 
 exports.createItem = async (req, res) => {
   try {
-    const { categoryId, subcategoryId, title, subheading, detail, link, position } =
-      req.body;
+    const {
+      categoryId,
+      subcategoryId,
+      title,
+      subheading,
+      detail,
+      link,
+      position,
+      config,
+      fields,
+    } = req.body;
 
     if (!categoryId) {
       return res
@@ -32,7 +51,15 @@ exports.createItem = async (req, res) => {
         .json({ success: false, message: "categoryId is required" });
     }
 
-    if (!title?.trim() && !subheading?.trim() && !detail?.trim() && !link?.trim()) {
+    const hasFields = Array.isArray(fields) && fields.length > 0;
+
+    if (
+      !title?.trim() &&
+      !subheading?.trim() &&
+      !detail?.trim() &&
+      !link?.trim() &&
+      !hasFields
+    ) {
       return res.status(400).json({
         success: false,
         message: "At least one field is required",
@@ -65,6 +92,8 @@ exports.createItem = async (req, res) => {
       subheading: subheading || "",
       detail: detail || "",
       link: link || "",
+      config: config || undefined,
+      fields: hasFields ? fields : [],
       userId: req.user._id,
       order: insertOrder,
     });
@@ -81,7 +110,8 @@ exports.createItem = async (req, res) => {
 
 exports.updateItem = async (req, res) => {
   try {
-    const { title, subheading, detail, link, position } = req.body;
+    const { title, subheading, detail, link, position, config, fields, tabs } =
+      req.body;
 
     const item = await Item.findOne({
       _id: req.params.id,
@@ -117,12 +147,18 @@ exports.updateItem = async (req, res) => {
     if (subheading !== undefined) item.subheading = subheading;
     if (detail !== undefined) item.detail = detail;
     if (link !== undefined) item.link = link;
+    if (config !== undefined) item.config = config;
+    if (fields !== undefined) item.fields = fields;
+    if (tabs !== undefined) item.tabs = encryptTabsValues(tabs, item.fields);
+
+    const hasFields = Array.isArray(item.fields) && item.fields.length > 0;
 
     if (
       !item.title?.trim() &&
       !item.subheading?.trim() &&
       !item.detail?.trim() &&
-      !item.link?.trim()
+      !item.link?.trim() &&
+      !hasFields
     ) {
       return res.status(400).json({
         success: false,
@@ -132,9 +168,12 @@ exports.updateItem = async (req, res) => {
 
     await item.save();
 
+    const responseData = item.toObject();
+    responseData.tabs = decryptTabsValues(responseData.tabs, responseData.fields);
+
     res.status(200).json({
       success: true,
-      data: item,
+      data: responseData,
       message: "Card updated successfully",
     });
   } catch (err) {

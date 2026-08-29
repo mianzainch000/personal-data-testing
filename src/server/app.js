@@ -6,6 +6,7 @@ const userRoutes = require("./routes/userRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const subcategoryRoutes = require("./routes/subcategoryRoutes");
 const itemRoutes = require("./routes/itemRoutes");
+const backupRoutes = require("./routes/backupRoutes");
 
 const app = express();
 
@@ -33,5 +34,6 @@ app.use("/", userRoutes);
 app.use("/", categoryRoutes);
 app.use("/", subcategoryRoutes);
 app.use("/", itemRoutes);
+app.use("/", backupRoutes);
 
 module.exports = app;

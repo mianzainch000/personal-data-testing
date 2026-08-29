@@ -6,6 +6,11 @@ const { checkLoginLock } = require("../middleware/loginRateLimiter");
 
 router.get("/get-settings", authenticate, userController.getSettings);
 router.post("/update-settings", authenticate, userController.updateSettings);
+router.post(
+  "/verifySpecialCode",
+  authenticate,
+  userController.verifySpecialCode,
+);
 
 router.post(
   "/signup",

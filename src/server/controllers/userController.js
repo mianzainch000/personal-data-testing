@@ -157,6 +157,45 @@ exports.login = async (req, res) => {
   }
 };
 
+// Re-checks the special code for an already logged-in user (req.user set by
+// the `authenticate` middleware) and issues a fresh token with hasAccess:true
+// and a new `iat`. Lets a protected/auto-locked category be unlocked again
+// without a full logout + login.
+exports.verifySpecialCode = async (req, res) => {
+  try {
+    const { specialCode } = req.body;
+    if (!specialCode) {
+      return res.status(400).json({ message: "Special code is required" });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.hashedCode) {
+      return res
+        .status(400)
+        .json({ message: "No special code has been set for this account" });
+    }
+
+    const isMatch = await comparePassword(specialCode, user.hashedCode);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Incorrect special code" });
+    }
+
+    const token = generateToken(
+      { _id: user._id, hasAccess: true },
+      process.env.SECRET_KEY,
+      process.env.JWT_EXPIRATION,
+    );
+
+    res.status(200).json({ success: true, token, hasAccess: true });
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error." });
+  }
+};
+
 exports.forgotPassword = async (req, res) => {
   const errors = validationResult(req);
 
