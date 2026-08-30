@@ -11,6 +11,10 @@ export const apiConfig = {
     export: "backup/export",
     import: "backup/import",
   },
+  files: {
+    base: "files",
+    upload: "files/upload",
+  },
   category: {
     get: "getCategories",
     post: "createCategory",

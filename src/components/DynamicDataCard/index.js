@@ -35,6 +35,7 @@ const DynamicDataCard = ({ item }) => {
   const [showRowModal, setShowRowModal] = useState(false);
   const [rowForm, setRowForm] = useState({});
   const [editingRowId, setEditingRowId] = useState(null);
+  const [fileUploading, setFileUploading] = useState({});
 
   const [showTabModal, setShowTabModal] = useState(false);
   const [tabNameInput, setTabNameInput] = useState("");
@@ -131,7 +132,33 @@ const DynamicDataCard = ({ item }) => {
       ? filteredRows
       : filteredRows.slice(pageStartIndex, pageStartIndex + effectiveRowsPerPage);
 
-  const tableData = pageRows.map((r) => ({ _id: r._id, ...(r.values || {}) }));
+  const tableData = pageRows.map((r) => {
+    const values = { ...(r.values || {}) };
+    fields.forEach((f) => {
+      if (f.type !== "file") return;
+      const key = String(f._id);
+      const raw = values[key];
+      if (!raw) {
+        values[key] = "—";
+        return;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        values[key] = (
+          <a
+            href={`/categories/files/api/${parsed.id}`}
+            className={styles.tabLink}
+            style={{ margin: 0, fontWeight: 500 }}
+          >
+            📎 {parsed.name}
+          </a>
+        );
+      } catch {
+        values[key] = raw;
+      }
+    });
+    return { _id: r._id, ...values };
+  });
 
   const isSearchOrFilterActive =
     (config.search && Boolean(search.trim())) ||
@@ -220,6 +247,53 @@ const DynamicDataCard = ({ item }) => {
     setShowRowModal(true);
   };
 
+  const handleFileFieldChange = async (fieldId, file) => {
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) {
+      showAlertMessage?.({
+        message: "File zyada bari hai (max 3MB).",
+        type: "error",
+      });
+      return;
+    }
+
+    setFileUploading((prev) => ({ ...prev, [fieldId]: true }));
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const res = await axios.post("/categories/files/api", {
+        fileName: file.name,
+        mimeType: file.type,
+        dataBase64: base64,
+      });
+
+      if (res?.data?.success) {
+        setRowForm((prev) => ({
+          ...prev,
+          [fieldId]: JSON.stringify({
+            id: res.data.fileId,
+            name: res.data.fileName,
+          }),
+        }));
+      } else {
+        showAlertMessage?.({
+          message: res?.data?.message || "Upload fail ho gaya.",
+          type: "error",
+        });
+      }
+    } catch (error) {
+      const { message } = handleAxiosError(error);
+      showAlertMessage?.({ message, type: "error" });
+    } finally {
+      setFileUploading((prev) => ({ ...prev, [fieldId]: false }));
+    }
+  };
+
   const submitRowModal = async (e) => {
     e.preventDefault();
 
@@ -287,6 +361,17 @@ const DynamicDataCard = ({ item }) => {
     return parts.join("-").replace(/\s+/g, "_");
   };
 
+  const formatCellForExport = (field, rawValue) => {
+    if (field.type === "file" && rawValue) {
+      try {
+        return JSON.parse(rawValue).name || "";
+      } catch {
+        return rawValue;
+      }
+    }
+    return rawValue ?? "";
+  };
+
   const exportPdf = () => {
     const doc = new jsPDF();
     const title = [item.title, activeTab?.tabName].filter(Boolean).join(" - ");
@@ -295,7 +380,7 @@ const DynamicDataCard = ({ item }) => {
       startY: title ? 20 : 10,
       head: [fields.map((f) => f.label)],
       body: sortedRows.map((r) =>
-        fields.map((f) => r.values?.[String(f._id)] ?? ""),
+        fields.map((f) => formatCellForExport(f, r.values?.[String(f._id)])),
       ),
     });
     doc.save(`${fileBaseName()}.pdf`);
@@ -686,23 +771,60 @@ const DynamicDataCard = ({ item }) => {
                   <div key={f._id} className={styles.modalField}>
                     <label>
                       {f.type === "encrypt" && "🔒 "}
+                      {f.type === "file" && "📎 "}
                       {f.label}
                     </label>
-                    <input
-                      type={
-                        f.type === "number"
-                          ? "number"
-                          : f.type === "date"
-                            ? "date"
-                            : f.type === "email"
-                              ? "email"
-                              : "text"
-                      }
-                      value={rowForm[String(f._id)] ?? ""}
-                      onChange={(e) =>
-                        setRowForm({ ...rowForm, [String(f._id)]: e.target.value })
-                      }
-                    />
+                    {f.type === "file" ? (
+                      <>
+                        <input
+                          type="file"
+                          onChange={(e) =>
+                            handleFileFieldChange(
+                              String(f._id),
+                              e.target.files?.[0],
+                            )
+                          }
+                        />
+                        {fileUploading[String(f._id)] && (
+                          <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>
+                            Upload ho raha hai...
+                          </span>
+                        )}
+                        {!fileUploading[String(f._id)] &&
+                          rowForm[String(f._id)] && (
+                            <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>
+                              ✅{" "}
+                              {(() => {
+                                try {
+                                  return JSON.parse(rowForm[String(f._id)])
+                                    .name;
+                                } catch {
+                                  return "";
+                                }
+                              })()}
+                            </span>
+                          )}
+                      </>
+                    ) : (
+                      <input
+                        type={
+                          f.type === "number"
+                            ? "number"
+                            : f.type === "date"
+                              ? "date"
+                              : f.type === "email"
+                                ? "email"
+                                : "text"
+                        }
+                        value={rowForm[String(f._id)] ?? ""}
+                        onChange={(e) =>
+                          setRowForm({
+                            ...rowForm,
+                            [String(f._id)]: e.target.value,
+                          })
+                        }
+                      />
+                    )}
                   </div>
                 ))}
                 <button type="submit" className={styles.modalSubmit}>

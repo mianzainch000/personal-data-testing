@@ -1,6 +1,7 @@
 "use client";
 import axios from "axios";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useSnackbar } from "@/components/Snackbar";
 import handleAxiosError from "@/components/HandleAxiosError";
 import styles from "@/css/DynamicDataCard.module.css";
@@ -55,34 +56,44 @@ const UnlockProtected = () => {
         🔓
       </span>
 
-      {showModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className={styles.modalClose}
-              onClick={() => setShowModal(false)}
-            >
-              ✕
-            </button>
-            <h3 className={styles.modalTitle}>Enter Code</h3>
-            <form onSubmit={submit} className={styles.modalForm}>
-              <div className={styles.modalField}>
-                <input
-                  type="password"
-                  autoFocus
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="••••"
-                />
-              </div>
-              <button type="submit" className={styles.modalSubmit} disabled={loading}>
-                {loading ? "..." : "Submit"}
+      {showModal &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className={styles.modalOverlay}
+            onClick={() => setShowModal(false)}
+          >
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={() => setShowModal(false)}
+              >
+                ✕
               </button>
-            </form>
-          </div>
-        </div>
-      )}
+              <h3 className={styles.modalTitle}>Enter Code</h3>
+              <form onSubmit={submit} className={styles.modalForm}>
+                <div className={styles.modalField}>
+                  <input
+                    type="password"
+                    autoFocus
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    placeholder="••••"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className={styles.modalSubmit}
+                  disabled={loading}
+                >
+                  {loading ? "..." : "Submit"}
+                </button>
+              </form>
+            </div>
+          </div>,
+          document.body,
+        )}
     </>
   );
 };

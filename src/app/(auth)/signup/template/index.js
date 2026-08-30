@@ -15,14 +15,12 @@ const SignupForm = () => {
 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showCode, setShowCode] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    confirmPassword: "",
     code: "",
   });
 
@@ -32,15 +30,6 @@ const SignupForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (formData.password !== formData.confirmPassword) {
-      showAlert({
-        message: "❌ Password and Confirm Password do not match",
-        type: "error",
-      });
-      return;
-    }
-
     await SignupApi();
   };
 
@@ -64,7 +53,6 @@ const SignupForm = () => {
           name: "",
           email: "",
           password: "",
-          confirmPassword: "",
           code: "",
         });
 
@@ -139,28 +127,6 @@ const SignupForm = () => {
             </div>
 
             <div className={styles.formGroup}>
-              <label className={styles.label}>Confirm Password</label>
-              <div className={styles.passwordWrapper}>
-                <input
-                  className={styles.input}
-                  type={showConfirmPassword ? "text" : "password"}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder={showConfirmPassword ? "1234..." : "••••••••"}
-                  required
-                />
-                <button
-                  type="button"
-                  className={styles.togglePassword}
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? "Hide" : "Show"}
-                </button>
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
               <label className={styles.label}>Special Code</label>
               <div className={styles.passwordWrapper}>
                 <input
@@ -189,7 +155,6 @@ const SignupForm = () => {
                 !formData.name ||
                 !formData.email ||
                 !formData.password ||
-                !formData.confirmPassword ||
                 !formData.code
               }
             >

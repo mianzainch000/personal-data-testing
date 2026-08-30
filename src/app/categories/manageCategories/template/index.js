@@ -988,6 +988,7 @@ const CategoryClientWrapper = () => {
                           <option value="encrypt">
                             🔒 Encrypt (DB mein encrypted, UI mein plain)
                           </option>
+                          <option value="file">📎 File Upload</option>
                         </select>
                         <button
                           type="button"

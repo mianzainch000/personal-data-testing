@@ -7,6 +7,7 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const subcategoryRoutes = require("./routes/subcategoryRoutes");
 const itemRoutes = require("./routes/itemRoutes");
 const backupRoutes = require("./routes/backupRoutes");
+const fileRoutes = require("./routes/fileRoutes");
 
 const app = express();
 
@@ -18,7 +19,7 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
 app.use(async (req, res, next) => {
   try {
@@ -35,5 +36,6 @@ app.use("/", categoryRoutes);
 app.use("/", subcategoryRoutes);
 app.use("/", itemRoutes);
 app.use("/", backupRoutes);
+app.use("/", fileRoutes);
 
 module.exports = app;
