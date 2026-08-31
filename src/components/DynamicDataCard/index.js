@@ -307,6 +307,7 @@ const DynamicDataCard = ({ item }) => {
     // If no tab exists yet (Tabs widget is off, or first row ever), create one implicitly.
     const workingTabs = tabs.length ? tabs : [{ tabName: "", order: 0, rows: [] }];
     const targetTabId = activeTab?._id;
+    const addToTop = (config.newRowPosition || "top") !== "bottom";
 
     const nextTabs = workingTabs.map((t, idx) => {
       const isTarget = targetTabId ? t._id === targetTabId : idx === 0;
@@ -320,15 +321,20 @@ const DynamicDataCard = ({ item }) => {
           ),
         };
       }
-      return {
-        ...t,
-        rows: [...rows, { order: rows.length, values: rowForm }],
-      };
+      const newRow = { values: rowForm };
+      const newRows = addToTop
+        ? [newRow, ...rows].map((r, i) => ({ ...r, order: i }))
+        : [...rows, { ...newRow, order: rows.length }];
+      return { ...t, rows: newRows };
     });
+
+    const addMessage = addToTop
+      ? "Row sab se upar add ho gayi!"
+      : "Row sab se neeche add ho gayi!";
 
     const saved = await persistTabs(
       nextTabs,
-      editingRowId ? "Row updated!" : "Row added!",
+      editingRowId ? "Row updated!" : addMessage,
     );
     if (saved) {
       setShowRowModal(false);

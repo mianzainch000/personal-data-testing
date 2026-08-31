@@ -33,6 +33,7 @@ const emptyItemConfig = {
   pdf: false,
   json: false,
   exportJson: false,
+  newRowPosition: "top",
 };
 const emptyItemForm = {
   title: "",
@@ -958,6 +959,35 @@ const CategoryClientWrapper = () => {
                           {opt.label}
                         </label>
                       ))}
+                    </div>
+
+                    <div className={styles.inlineRow} style={{ marginBottom: "0.8rem" }}>
+                      <label
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          fontSize: "0.85rem",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Nayi row kahan add ho:
+                      </label>
+                      <select
+                        value={itemForm.config.newRowPosition || "top"}
+                        onChange={(e) =>
+                          setItemForm({
+                            ...itemForm,
+                            config: {
+                              ...itemForm.config,
+                              newRowPosition: e.target.value,
+                            },
+                          })
+                        }
+                      >
+                        <option value="top">⬆️ Sab se upar (latest first)</option>
+                        <option value="bottom">⬇️ Sab se neeche (oldest first)</option>
+                      </select>
                     </div>
 
                     <div className={styles.fieldsBuilder}>

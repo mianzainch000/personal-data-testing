@@ -74,6 +74,8 @@ const itemSchema = new mongoose.Schema(
       pdf: { type: Boolean, default: false },
       json: { type: Boolean, default: false },
       exportJson: { type: Boolean, default: false },
+      // Where a newly added row goes: "top" (latest-first, default) or "bottom".
+      newRowPosition: { type: String, enum: ["top", "bottom"], default: "top" },
     },
     fields: { type: [itemFieldSchema], default: [] },
     tabs: { type: [itemTabSchema], default: [] },
