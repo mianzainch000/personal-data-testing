@@ -207,8 +207,10 @@ exports.exportBackup = async (req, res) => {
   }
 };
 
-// Import is additive only — it never deletes or overwrites existing data,
-// it just adds the categories/subcategories/items from the file as new ones.
+// For each category in the file, if a category with the SAME NAME already
+// exists for this user, it is fully replaced (deleted, then recreated from
+// the file) so re-importing the same backup never creates duplicates.
+// Categories NOT present in the file are left completely untouched.
 exports.importBackup = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -221,11 +223,23 @@ exports.importBackup = async (req, res) => {
     }
 
     let categoriesCreated = 0;
+    let categoriesReplaced = 0;
     let subcategoriesCreated = 0;
     let itemsCreated = 0;
 
     for (const catData of backup.categories) {
       if (!catData?.categoryName) continue;
+
+      const existing = await Category.findOne({
+        userId,
+        categoryName: catData.categoryName,
+      });
+      if (existing) {
+        await Item.deleteMany({ userId, categoryId: existing._id });
+        await Subcategory.deleteMany({ userId, categoryId: existing._id });
+        await Category.deleteOne({ _id: existing._id });
+        categoriesReplaced++;
+      }
 
       const newCategory = await Category.create({
         categoryName: catData.categoryName,
@@ -277,8 +291,9 @@ exports.importBackup = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `Import complete: ${categoriesCreated} categories, ${subcategoriesCreated} subcategories, ${itemsCreated} detail cards added.`,
+      message: `Import complete: ${categoriesCreated} categories (${categoriesReplaced} replaced duplicates), ${subcategoriesCreated} subcategories, ${itemsCreated} detail cards.`,
       categoriesCreated,
+      categoriesReplaced,
       subcategoriesCreated,
       itemsCreated,
     });

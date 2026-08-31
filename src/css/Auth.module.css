@@ -19,17 +19,14 @@
 }
 
 .card {
-  top: 50%;
-  left: 50%;
   width: 90%;
-  z-index: 10;
   color: white;
+  z-index: 10;
   max-width: 400px;
-  position: absolute;
   padding: 35px 28px;
   border-radius: 28px;
   box-sizing: border-box;
-  transform: translate(-50%, -50%);
+  margin: auto;
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.1);

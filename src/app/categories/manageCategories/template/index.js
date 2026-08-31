@@ -66,6 +66,8 @@ const CategoryClientWrapper = () => {
   const [adminTab, setAdminTab] = useState("content");
   const [backupLoading, setBackupLoading] = useState(false);
   const [backupResultMsg, setBackupResultMsg] = useState("");
+  const [pendingImportBackup, setPendingImportBackup] = useState(null);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [categoryForm, setCategoryForm] = useState(emptyCategoryForm);
@@ -495,34 +497,58 @@ const CategoryClientWrapper = () => {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = async () => {
-      setBackupLoading(true);
-      setBackupResultMsg("");
+    reader.onload = () => {
       try {
         const backup = JSON.parse(reader.result);
-        const res = await axios.post("manageCategories/backup/api", {
-          backup,
-        });
-        if (res?.data?.success) {
-          setBackupResultMsg(res.data.message || "Import complete.");
-          showAlertMessage({ message: "Import ho gaya!", type: "success" });
-          await fetchCategories(false);
-        } else {
+        if (!backup || !Array.isArray(backup.categories)) {
           showAlertMessage({
-            message: res?.data?.message || "Import fail ho gaya.",
+            message: "Ye file valid backup JSON nahi hai.",
             type: "error",
           });
+          return;
         }
+        setPendingImportBackup(backup);
+        setShowImportConfirm(true);
       } catch {
         showAlertMessage({
           message: "Ye file valid backup JSON nahi hai.",
           type: "error",
         });
-      } finally {
-        setBackupLoading(false);
       }
     };
     reader.readAsText(file);
+  };
+
+  const confirmImportFullBackup = async () => {
+    setShowImportConfirm(false);
+    if (!pendingImportBackup) return;
+
+    setBackupLoading(true);
+    setBackupResultMsg("");
+    try {
+      const res = await axios.post("manageCategories/backup/api", {
+        backup: pendingImportBackup,
+      });
+      if (res?.data?.success) {
+        setBackupResultMsg(res.data.message || "Import complete.");
+        showAlertMessage({
+          message: res.data.message || "Import ho gaya!",
+          type: "success",
+        });
+        await fetchCategories(false);
+      } else {
+        showAlertMessage({
+          message: res?.data?.message || "Import fail ho gaya.",
+          type: "error",
+        });
+      }
+    } catch (error) {
+      const { message } = handleAxiosError(error);
+      showAlertMessage({ message, type: "error" });
+    } finally {
+      setBackupLoading(false);
+      setPendingImportBackup(null);
+    }
   };
 
   return (
@@ -538,6 +564,20 @@ const CategoryClientWrapper = () => {
         onCancel={() => {
           setShowDeleteModal(false);
           setDeleteTarget(null);
+        }}
+      />
+
+      <ConfirmModal
+        isOpen={showImportConfirm}
+        title="Import Backup"
+        confirmText="Yes, Import"
+        message={`Is file mein ${
+          pendingImportBackup?.categories?.length || 0
+        } category(ies) hain. Jo bhi category isi naam se pehle se maujood hai wo REPLACE ho jayegi (purani delete ho kar nayi ban jayegi). Baaki categories untouched rahengi. Continue?`}
+        onConfirm={confirmImportFullBackup}
+        onCancel={() => {
+          setShowImportConfirm(false);
+          setPendingImportBackup(null);
         }}
       />
 
@@ -567,9 +607,12 @@ const CategoryClientWrapper = () => {
           <p className={styles.stepTitle}>🧳 Full App Backup</p>
           <p style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "1rem" }}>
             Ye poori app ka data (sab categories, sub-headings, detail cards)
-            ek hi JSON file mein backup/restore karta hai. Import hamesha{" "}
-            <strong>naya data add</strong> karta hai — kuch bhi delete/overwrite
-            nahi karta.
+            ek hi JSON file mein backup/restore karta hai. Import karte waqt,
+            agar file mein koi category <strong>same naam</strong> se pehle
+            se maujood ho to wo <strong>replace</strong> ho jayegi (purani
+            delete, nayi bann jayegi) — duplicate nahi banega. Baaki categories
+            (jo file mein nahi hain, jaise protected wali) bilkul untouched
+            rehti hain.
           </p>
 
           <div className={styles.groupButtons}>

@@ -165,17 +165,21 @@ const DynamicDataCard = ({ item }) => {
     (config.filter && Boolean(filterFieldId) && filterValue !== "All");
 
   // ---------- Persistence ----------
-  const persistTabs = async (nextTabs) => {
+  const persistTabs = async (nextTabs, successMessage) => {
     try {
       const res = await axios.put(`/categories/items/api/${item._id}`, {
         tabs: nextTabs,
       });
       const saved = res?.data?.data?.tabs || nextTabs;
       setTabs(saved);
+      showAlertMessage?.({
+        message: successMessage || res?.data?.message || "Saved!",
+        type: "success",
+      });
       return saved;
     } catch (error) {
       const { message } = handleAxiosError(error);
-      showAlertMessage({ message, type: "error" });
+      showAlertMessage?.({ message, type: "error" });
       return null;
     }
   };
@@ -216,7 +220,10 @@ const DynamicDataCard = ({ item }) => {
       nextTabs = [...tabs, { ...tabPatch, order: tabs.length, rows: [] }];
     }
 
-    const saved = await persistTabs(nextTabs);
+    const saved = await persistTabs(
+      nextTabs,
+      editingTabId ? "Tab updated!" : "Tab added!",
+    );
     if (saved) {
       setShowTabModal(false);
       if (!editingTabId) {
@@ -228,7 +235,7 @@ const DynamicDataCard = ({ item }) => {
 
   const confirmDeleteTab = async () => {
     const nextTabs = tabs.filter((t) => t._id !== deleteTarget.id);
-    const saved = await persistTabs(nextTabs);
+    const saved = await persistTabs(nextTabs, "Tab deleted!");
     if (saved) setActiveTabId(saved[0]?._id);
     setShowDeleteModal(false);
     setDeleteTarget(null);
@@ -319,7 +326,10 @@ const DynamicDataCard = ({ item }) => {
       };
     });
 
-    const saved = await persistTabs(nextTabs);
+    const saved = await persistTabs(
+      nextTabs,
+      editingRowId ? "Row updated!" : "Row added!",
+    );
     if (saved) {
       setShowRowModal(false);
       setEditingRowId(null);
@@ -333,7 +343,7 @@ const DynamicDataCard = ({ item }) => {
         ? { ...t, rows: (t.rows || []).filter((r) => r._id !== deleteTarget.id) }
         : t,
     );
-    await persistTabs(nextTabs);
+    await persistTabs(nextTabs, "Row deleted!");
     setShowDeleteModal(false);
     setDeleteTarget(null);
   };
@@ -352,7 +362,7 @@ const DynamicDataCard = ({ item }) => {
     const nextTabs = tabs.map((t) =>
       t._id === activeTab._id ? { ...t, rows: withOrder } : t,
     );
-    persistTabs(nextTabs);
+    persistTabs(nextTabs, "Order updated!");
   };
 
   // ---------- Export ----------
