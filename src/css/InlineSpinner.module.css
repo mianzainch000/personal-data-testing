@@ -1,10 +1,10 @@
 .spinner {
-  display: inline-block;
   border-radius: 50%;
+  display: inline-block;
+  vertical-align: middle;
   border: 2px solid var(--color-ghost-hover);
   border-top: 2px solid var(--color-primary);
   animation: inline-spin 0.7s linear infinite;
-  vertical-align: middle;
 }
 
 @keyframes inline-spin {

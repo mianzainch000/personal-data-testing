@@ -1,6 +1,5 @@
 const { encrypt, decrypt } = require("./authFunction");
 
-// _id strings (as strings) of fields whose type is "encrypt".
 const encryptFieldIds = (fields = []) =>
   new Set(
     (fields || [])
@@ -8,7 +7,6 @@ const encryptFieldIds = (fields = []) =>
       .map((f) => String(f._id)),
   );
 
-// Encrypts values for encrypt-type fields across all tabs/rows before saving.
 const encryptTabsValues = (tabs = [], fields = []) => {
   const ids = encryptFieldIds(fields);
   if (!ids.size) return tabs;
@@ -27,8 +25,6 @@ const encryptTabsValues = (tabs = [], fields = []) => {
   }));
 };
 
-// Decrypts values for encrypt-type fields — only ever used to build API
-// responses, never written back to the database.
 const decryptTabsValues = (tabs = [], fields = []) => {
   const ids = encryptFieldIds(fields);
   if (!ids.size) return tabs;
@@ -41,9 +37,7 @@ const decryptTabsValues = (tabs = [], fields = []) => {
         if (v) {
           try {
             values[fid] = decrypt(v);
-          } catch {
-            // Leave as-is (e.g. legacy plaintext saved before this field existed).
-          }
+          } catch {}
         }
       });
       return { ...r, values };

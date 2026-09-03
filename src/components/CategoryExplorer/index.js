@@ -2,9 +2,9 @@
 import axios from "axios";
 import Link from "next/link";
 import Loader from "@/components/Loader";
+import { useEffect, useState } from "react";
 import ItemCard from "@/components/ItemCard";
 import itemStyles from "@/css/ItemCard.module.css";
-import { useEffect, useState } from "react";
 import { useSnackbar } from "@/components/Snackbar";
 import handleAxiosError from "@/components/HandleAxiosError";
 
@@ -23,7 +23,8 @@ const CategoryExplorer = ({ categoryId, subcategoryId = null }) => {
           `/categories/manageCategories/subcategories/api?categoryId=${categoryId}`,
         ),
         axios.get(
-          `/categories/items/api?categoryId=${categoryId}${subcategoryId ? `&subcategoryId=${subcategoryId}` : ""
+          `/categories/items/api?categoryId=${categoryId}${
+            subcategoryId ? `&subcategoryId=${subcategoryId}` : ""
           }`,
         ),
       ]);
@@ -41,7 +42,6 @@ const CategoryExplorer = ({ categoryId, subcategoryId = null }) => {
 
   useEffect(() => {
     fetchAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId, subcategoryId]);
 
   if (loading) return <Loader />;
@@ -50,7 +50,6 @@ const CategoryExplorer = ({ categoryId, subcategoryId = null }) => {
     <div className={itemStyles.pageContainer}>
       {!subcategoryId && subcategories.length > 0 && (
         <>
-
           <div className="categorie-grid">
             {subcategories.map((sub) => (
               <Link
@@ -68,7 +67,7 @@ const CategoryExplorer = ({ categoryId, subcategoryId = null }) => {
       {(subcategoryId || subcategories.length === 0) &&
         (items.length === 0 ? (
           <p className={itemStyles.emptyText}>
-            Koi card nahi hai. Manage Categories se add karein.
+            No cards yet. Add one from Manage Categories.
           </p>
         ) : (
           <div className={itemStyles.list}>

@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
-// One column/field of a dynamic table. Fully user-defined (any label/name).
 const itemFieldSchema = new Schema({
   label: { type: String, trim: true, required: true },
   type: {
@@ -11,19 +10,24 @@ const itemFieldSchema = new Schema({
   },
 });
 
-// One data row inside a tab. `values` is keyed by the field's _id (string).
 const itemRowSchema = new Schema({
   order: { type: Number, default: 0 },
   values: { type: Schema.Types.Mixed, default: {} },
 });
 
-// One tab (e.g. "Meter 1", "Meter 2") inside a detail card, each holding its own rows.
+const itemCardSchema = new Schema({
+  title: { type: String, trim: true, default: "" },
+  link: { type: String, trim: true, default: "" },
+  order: { type: Number, default: 0 },
+});
+
 const itemTabSchema = new Schema({
   tabName: { type: String, trim: true, default: "" },
   detail: { type: String, trim: true, default: "" },
   link: { type: String, trim: true, default: "" },
   order: { type: Number, default: 0 },
   rows: { type: [itemRowSchema], default: [] },
+  cards: { type: [itemCardSchema], default: [] },
 });
 
 const itemSchema = new mongoose.Schema(
@@ -62,8 +66,6 @@ const itemSchema = new mongoose.Schema(
       default: "",
     },
 
-    // ---- Dynamic detail-card widgets ----
-    // config.table is the master switch; the rest only matter when it's on.
     config: {
       table: { type: Boolean, default: false },
       tabs: { type: Boolean, default: false },
@@ -74,8 +76,17 @@ const itemSchema = new mongoose.Schema(
       pdf: { type: Boolean, default: false },
       json: { type: Boolean, default: false },
       exportJson: { type: Boolean, default: false },
-      // Where a newly added row goes: "top" (latest-first, default) or "bottom".
+
       newRowPosition: { type: String, enum: ["top", "bottom"], default: "top" },
+
+      paginationRowsPerPage: { type: Schema.Types.Mixed, default: "all" },
+      paginationCustomOptions: { type: [Number], default: [] },
+
+      messages: {
+        rowAdded: { type: String, trim: true, default: "" },
+        rowUpdated: { type: String, trim: true, default: "" },
+        rowDeleted: { type: String, trim: true, default: "" },
+      },
     },
     fields: { type: [itemFieldSchema], default: [] },
     tabs: { type: [itemTabSchema], default: [] },

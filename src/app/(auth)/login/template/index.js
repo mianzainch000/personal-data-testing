@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
+import { useState } from "react";
 import { signIn } from "next-auth/react";
 import Loader from "@/components/Loader";
 import styles from "@/css/Auth.module.css";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSnackbar } from "@/components/Snackbar";
 import handleAxiosError from "@/components/HandleAxiosError";

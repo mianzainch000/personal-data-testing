@@ -7,10 +7,7 @@ const ItemCard = ({ item }) => {
     <div className={styles.card}>
       <div className={styles.cardHead}>
         {item.link && item.title ? (
-          <a
-            href={item.link}
-            className={`${styles.title} ${styles.titleLink}`}
-          >
+          <a href={item.link} className={`${styles.title} ${styles.titleLink}`}>
             {item.title}
           </a>
         ) : (
@@ -20,7 +17,9 @@ const ItemCard = ({ item }) => {
           <p className={styles.subheading}>{item.subheading}</p>
         )}
         {item.detail && <p className={styles.detail}>{item.detail}</p>}
-        {item.config?.table && <DynamicDataCard item={item} />}
+        {(item.config?.table || item.config?.tabs) && (
+          <DynamicDataCard item={item} />
+        )}
       </div>
     </div>
   );

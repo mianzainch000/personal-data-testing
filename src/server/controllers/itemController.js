@@ -169,7 +169,10 @@ exports.updateItem = async (req, res) => {
     await item.save();
 
     const responseData = item.toObject();
-    responseData.tabs = decryptTabsValues(responseData.tabs, responseData.fields);
+    responseData.tabs = decryptTabsValues(
+      responseData.tabs,
+      responseData.fields,
+    );
 
     res.status(200).json({
       success: true,

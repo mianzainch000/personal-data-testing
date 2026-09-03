@@ -4,10 +4,10 @@ import Loader from "@/components/Loader";
 import { useState, useEffect } from "react";
 import { useSnackbar } from "@/components/Snackbar";
 import ConfirmModal from "@/components/ConfirmModal";
-import UnlockProtected from "@/components/UnlockProtected";
 import InlineSpinner from "@/components/InlineSpinner";
-import handleAxiosError from "@/components/HandleAxiosError";
 import styles from "@/css/ManageCategories.module.css";
+import UnlockProtected from "@/components/UnlockProtected";
+import handleAxiosError from "@/components/HandleAxiosError";
 
 const emptyCategoryForm = {
   categoryName: "",
@@ -34,6 +34,7 @@ const emptyItemConfig = {
   json: false,
   exportJson: false,
   newRowPosition: "top",
+  messages: { rowAdded: "", rowUpdated: "", rowDeleted: "" },
 };
 const emptyItemForm = {
   title: "",
@@ -45,9 +46,9 @@ const emptyItemForm = {
   fields: [],
 };
 
-// Extra widgets, only shown once "Table" is checked.
 const WIDGET_OPTIONS = [
-  { key: "tabs", icon: "📁", label: "Tabs (Meter 1 / Meter 2 jaisi groups)" },
+  { key: "table", icon: "📊", label: "Table (dynamic responsive table)" },
+  { key: "tabs", icon: "📁", label: "Tabs (groups like Meter 1 / Meter 2)" },
   { key: "dragDrop", icon: "🔀", label: "Drag & Drop Reorder" },
   { key: "pagination", icon: "🔢", label: "Pagination" },
   { key: "pdf", icon: "📄", label: "PDF Download" },
@@ -61,7 +62,6 @@ const CategoryClientWrapper = () => {
 
   const [loading, setLoading] = useState(false);
 
-  // Step 1 - Categories
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [adminTab, setAdminTab] = useState("content");
@@ -74,14 +74,12 @@ const CategoryClientWrapper = () => {
   const [categoryForm, setCategoryForm] = useState(emptyCategoryForm);
   const [editingCategory, setEditingCategory] = useState(false);
 
-  // Step 2 - Subcategories
   const [subcategories, setSubcategories] = useState([]);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState("");
   const [showSubForm, setShowSubForm] = useState(false);
   const [subForm, setSubForm] = useState(emptySubForm);
   const [editingSubcategory, setEditingSubcategory] = useState(false);
 
-  // Step 3/4 - Detail cards (Items)
   const [items, setItems] = useState([]);
   const [showItemForm, setShowItemForm] = useState(false);
   const [itemForm, setItemForm] = useState(emptyItemForm);
@@ -90,7 +88,7 @@ const CategoryClientWrapper = () => {
   const [newFieldType, setNewFieldType] = useState("text");
   const [editingFieldIndex, setEditingFieldIndex] = useState(null);
 
-  const [deleteTarget, setDeleteTarget] = useState(null); // { type, id, message }
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const selectedCategory = categories.find((c) => c._id === selectedCategoryId);
@@ -98,7 +96,6 @@ const CategoryClientWrapper = () => {
     (s) => s._id === selectedSubcategoryId,
   );
 
-  // ---------- Fetchers ----------
   const fetchCategories = async (keepSelection = true) => {
     setCategoriesLoading(true);
     try {
@@ -147,9 +144,7 @@ const CategoryClientWrapper = () => {
     }
     try {
       const qs = subcategoryId ? `&subcategoryId=${subcategoryId}` : "";
-      const res = await axios.get(
-        `items/api?categoryId=${categoryId}${qs}`,
-      );
+      const res = await axios.get(`items/api?categoryId=${categoryId}${qs}`);
       setItems(res?.data?.data || []);
     } catch (error) {
       const { message } = handleAxiosError(error);
@@ -159,20 +154,16 @@ const CategoryClientWrapper = () => {
 
   useEffect(() => {
     fetchCategories();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     fetchSubcategories(selectedCategoryId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategoryId]);
 
   useEffect(() => {
     fetchItems(selectedCategoryId, selectedSubcategoryId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategoryId, selectedSubcategoryId]);
 
-  // ---------- Step 1: Category actions ----------
   const openEditCategory = () => {
     if (!selectedCategory) return;
     setCategoryForm({
@@ -206,7 +197,9 @@ const CategoryClientWrapper = () => {
       const payload = {
         ...categoryForm,
         position:
-          categoryForm.position !== "" ? Number(categoryForm.position) : undefined,
+          categoryForm.position !== ""
+            ? Number(categoryForm.position)
+            : undefined,
       };
       const res =
         editingCategory && selectedCategoryId
@@ -239,9 +232,7 @@ const CategoryClientWrapper = () => {
 
   const deleteCategory = async () => {
     try {
-      const res = await axios.delete(
-        `manageCategories/api/${deleteTarget.id}`,
-      );
+      const res = await axios.delete(`manageCategories/api/${deleteTarget.id}`);
       showAlertMessage({
         message: res?.data?.message || "Deleted successfully",
         type: "success",
@@ -257,7 +248,6 @@ const CategoryClientWrapper = () => {
     }
   };
 
-  // ---------- Step 2: Subcategory actions ----------
   const openEditSubcategory = () => {
     if (!selectedSubcategory) return;
     setSubForm({
@@ -288,7 +278,8 @@ const CategoryClientWrapper = () => {
       const payload = {
         ...subForm,
         categoryId: selectedCategoryId,
-        position: subForm.position !== "" ? Number(subForm.position) : undefined,
+        position:
+          subForm.position !== "" ? Number(subForm.position) : undefined,
       };
       const res =
         editingSubcategory && selectedSubcategoryId
@@ -339,7 +330,6 @@ const CategoryClientWrapper = () => {
     }
   };
 
-  // ---------- Step 3/4: Detail card (Item) actions ----------
   const openCreateItem = () => {
     setItemForm(emptyItemForm);
     setEditingItemId(null);
@@ -407,8 +397,7 @@ const CategoryClientWrapper = () => {
 
       showAlertMessage({
         message:
-          res?.data?.message ||
-          (editingItemId ? "Card Updated" : "Card Added"),
+          res?.data?.message || (editingItemId ? "Card Updated" : "Card Added"),
         type: "success",
       });
 
@@ -448,7 +437,6 @@ const CategoryClientWrapper = () => {
     return deleteItem();
   };
 
-  // ---------- Backup (full app export/import) ----------
   const downloadFullBackup = async () => {
     setBackupLoading(true);
     setBackupResultMsg("");
@@ -470,17 +458,17 @@ const CategoryClientWrapper = () => {
 
       if (skipped > 0) {
         setBackupResultMsg(
-          `Backup ho gaya, lekin ${skipped} protected categor${
-            skipped === 1 ? "y" : "ies"
-          } is mein shamil NAHI hain (kyunke unlock nahi thi). 🔓 se code dal kar dobara download karein agar unhe bhi chahiye.`,
+          `Backup downloaded, but ${skipped} protected categor${
+            skipped === 1 ? "y was" : "ies were"
+          } NOT included (session not unlocked). Use 🔓 to enter the code and download again if you need them too.`,
         );
         showAlertMessage({
-          message: `Backup ho gaya (${skipped} protected category skip hui).`,
+          message: `Backup downloaded (${skipped} protected categor${skipped === 1 ? "y" : "ies"} skipped).`,
           type: "success",
         });
       } else {
         showAlertMessage({
-          message: "Backup download ho gaya.",
+          message: "Backup downloaded.",
           type: "success",
         });
       }
@@ -503,7 +491,7 @@ const CategoryClientWrapper = () => {
         const backup = JSON.parse(reader.result);
         if (!backup || !Array.isArray(backup.categories)) {
           showAlertMessage({
-            message: "Ye file valid backup JSON nahi hai.",
+            message: "This file is not a valid backup JSON.",
             type: "error",
           });
           return;
@@ -512,7 +500,7 @@ const CategoryClientWrapper = () => {
         setShowImportConfirm(true);
       } catch {
         showAlertMessage({
-          message: "Ye file valid backup JSON nahi hai.",
+          message: "This file is not a valid backup JSON.",
           type: "error",
         });
       }
@@ -533,13 +521,13 @@ const CategoryClientWrapper = () => {
       if (res?.data?.success) {
         setBackupResultMsg(res.data.message || "Import complete.");
         showAlertMessage({
-          message: res.data.message || "Import ho gaya!",
+          message: res.data.message || "Import complete!",
           type: "success",
         });
         await fetchCategories(false);
       } else {
         showAlertMessage({
-          message: res?.data?.message || "Import fail ho gaya.",
+          message: res?.data?.message || "Import failed.",
           type: "error",
         });
       }
@@ -560,7 +548,9 @@ const CategoryClientWrapper = () => {
         isOpen={showDeleteModal}
         title="Confirm Delete"
         confirmText="Yes, Delete"
-        message={deleteTarget?.message || "Are you sure you want to delete this?"}
+        message={
+          deleteTarget?.message || "Are you sure you want to delete this?"
+        }
         onConfirm={confirmDelete}
         onCancel={() => {
           setShowDeleteModal(false);
@@ -572,9 +562,9 @@ const CategoryClientWrapper = () => {
         isOpen={showImportConfirm}
         title="Import Backup"
         confirmText="Yes, Import"
-        message={`Is file mein ${
+        message={`This file contains ${
           pendingImportBackup?.categories?.length || 0
-        } category(ies) hain. Jo bhi category isi naam se pehle se maujood hai wo REPLACE ho jayegi (purani delete ho kar nayi ban jayegi). Baaki categories untouched rahengi. Continue?`}
+        } category(ies). Any category with a matching name will be REPLACED (the old one deleted, the new one created). All other categories will be left untouched. Continue?`}
         onConfirm={confirmImportFullBackup}
         onCancel={() => {
           setShowImportConfirm(false);
@@ -606,14 +596,16 @@ const CategoryClientWrapper = () => {
       {adminTab === "backup" ? (
         <div className={styles.stepCard}>
           <p className={styles.stepTitle}>🧳 Full App Backup</p>
-          <p style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "1rem" }}>
-            Ye poori app ka data (sab categories, sub-headings, detail cards)
-            ek hi JSON file mein backup/restore karta hai. Import karte waqt,
-            agar file mein koi category <strong>same naam</strong> se pehle
-            se maujood ho to wo <strong>replace</strong> ho jayegi (purani
-            delete, nayi bann jayegi) — duplicate nahi banega. Baaki categories
-            (jo file mein nahi hain, jaise protected wali) bilkul untouched
-            rehti hain.
+          <p
+            style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "1rem" }}
+          >
+            This backs up/restores the entire app&apos;s data (all categories,
+            sub-headings, detail cards) as a single JSON file. When you import,
+            if the file contains a category with the <strong>same name</strong>{" "}
+            as one that already exists, it will be <strong>replaced</strong>{" "}
+            (the old one deleted, the new one created) — no duplicates.
+            Categories not present in the file (e.g. protected ones) are left
+            completely untouched.
           </p>
 
           <div className={styles.groupButtons}>
@@ -646,578 +638,733 @@ const CategoryClientWrapper = () => {
         </div>
       ) : (
         <>
-          {/* Step 1: Category */}
-      <div className={styles.stepCard}>
-        <p className={styles.stepTitle}>
-          <span className={styles.stepBadge}>1</span>
-          Select a Category (Heading) <UnlockProtected />
-        </p>
+          {}
+          <div className={styles.stepCard}>
+            <p className={styles.stepTitle}>
+              <span className={styles.stepBadge}>1</span>
+              Select a Category (Heading) <UnlockProtected />
+            </p>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-          <select
-            className={styles.select}
-            style={{ flex: 1 }}
-            value={selectedCategoryId}
-            onChange={(e) => setSelectedCategoryId(e.target.value)}
-          >
-            <option value="">— Select —</option>
-            {categories.map((c) => (
-              <option key={c._id} value={c._id}>
-                {c.protected ? "🔒 " : ""}
-                {c.categoryName}
-              </option>
-            ))}
-          </select>
-          {categoriesLoading && <InlineSpinner />}
-        </div>
-
-        {selectedCategory && (
-          <div className={styles.groupButtons}>
-            <button className={styles.editBtn} onClick={openEditCategory}>
-              ✏️ Edit this category
-            </button>
-            <button
-              className={styles.deleteBtn}
-              onClick={() => {
-                setDeleteTarget({
-                  type: "category",
-                  id: selectedCategoryId,
-                  message:
-                    "Are you sure you want to delete this category? Its subcategories and cards will be deleted too.",
-                });
-                setShowDeleteModal(true);
-              }}
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}
             >
-              🗑️ Delete this category
+              <select
+                className={styles.select}
+                style={{ flex: 1 }}
+                value={selectedCategoryId}
+                onChange={(e) => setSelectedCategoryId(e.target.value)}
+              >
+                <option value="">— Select —</option>
+                {categories.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.protected ? "🔒 " : ""}
+                    {c.categoryName}
+                  </option>
+                ))}
+              </select>
+              {categoriesLoading && <InlineSpinner />}
+            </div>
+
+            {selectedCategory && (
+              <div className={styles.groupButtons}>
+                <button className={styles.editBtn} onClick={openEditCategory}>
+                  ✏️ Edit this category
+                </button>
+                <button
+                  className={styles.deleteBtn}
+                  onClick={() => {
+                    setDeleteTarget({
+                      type: "category",
+                      id: selectedCategoryId,
+                      message:
+                        "Are you sure you want to delete this category? Its subcategories and cards will be deleted too.",
+                    });
+                    setShowDeleteModal(true);
+                  }}
+                >
+                  🗑️ Delete this category
+                </button>
+              </div>
+            )}
+
+            <button
+              type="button"
+              className={styles.toggleCreate}
+              onClick={() =>
+                showCategoryForm
+                  ? setShowCategoryForm(false)
+                  : openCreateCategory()
+              }
+            >
+              {showCategoryForm ? "▾" : "▸"} + Create a new category
             </button>
-          </div>
-        )}
 
-        <button
-          type="button"
-          className={styles.toggleCreate}
-          onClick={() =>
-            showCategoryForm ? setShowCategoryForm(false) : openCreateCategory()
-          }
-        >
-          {showCategoryForm ? "▾" : "▸"} + Create a new category
-        </button>
-
-        {showCategoryForm && (
-          <form className={styles.createPanel} onSubmit={submitCategoryForm}>
-            <input
-              type="text"
-              placeholder="Category Name (e.g. Recipes, Books)"
-              value={categoryForm.categoryName}
-              onChange={(e) =>
-                setCategoryForm({
-                  ...categoryForm,
-                  categoryName: e.target.value,
-                })
-              }
-              required
-            />
-            <input
-              type="number"
-              min="1"
-              placeholder="Index (optional, e.g. 2)"
-              value={categoryForm.position}
-              onChange={(e) =>
-                setCategoryForm({
-                  ...categoryForm,
-                  position: e.target.value,
-                })
-              }
-            />
-            <label className={styles.widgetSectionLabel}>
-              <input
-                type="checkbox"
-                checked={categoryForm.protected}
-                onChange={(e) =>
-                  setCategoryForm({
-                    ...categoryForm,
-                    protected: e.target.checked,
-                  })
-                }
-              />
-              🔒 Protect (login par special code na dalein to ye category
-              dropdown/main page mein na dikhe)
-            </label>
-
-            {categoryForm.protected && (
-              <div className={styles.inlineRow} style={{ marginTop: "0.5rem" }}>
+            {showCategoryForm && (
+              <form
+                className={styles.createPanel}
+                onSubmit={submitCategoryForm}
+              >
                 <input
-                  type="number"
-                  min="1"
-                  placeholder="Auto-lock after kitne minute? (khali chhoro to poori session tak dikhegi)"
-                  value={categoryForm.protectTimeoutMinutes}
+                  type="text"
+                  placeholder="Category Name (e.g. Recipes, Books)"
+                  value={categoryForm.categoryName}
                   onChange={(e) =>
                     setCategoryForm({
                       ...categoryForm,
-                      protectTimeoutMinutes: e.target.value,
+                      categoryName: e.target.value,
+                    })
+                  }
+                  required
+                />
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="Index (optional, e.g. 2)"
+                  value={categoryForm.position}
+                  onChange={(e) =>
+                    setCategoryForm({
+                      ...categoryForm,
+                      position: e.target.value,
                     })
                   }
                 />
-              </div>
-            )}
-            <div className={styles.createActions}>
-              <button type="submit" className={styles.editBtn}>
-                {editingCategory ? "Update" : "Create"}
-              </button>
-              <button
-                type="button"
-                className={styles.deleteBtn}
-                onClick={() => setShowCategoryForm(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-
-      {/* Step 2: Subcategory */}
-      {selectedCategoryId && (
-        <div className={styles.stepCard}>
-          <p className={styles.stepTitle}>
-            <span className={styles.stepBadge}>2</span>
-            &quot;{selectedCategory?.categoryName}&quot; ke andar Sub Heading
-            select karo
-          </p>
-
-          <select
-            className={styles.select}
-            value={selectedSubcategoryId}
-            onChange={(e) => setSelectedSubcategoryId(e.target.value)}
-          >
-            <option value="">— Select — (Direct cards, no sub heading)</option>
-            {subcategories.map((s) => (
-              <option key={s._id} value={s._id}>
-                {s.subcategoryName}
-              </option>
-            ))}
-          </select>
-
-          {selectedSubcategory && (
-            <div className={styles.groupButtons}>
-              <button className={styles.editBtn} onClick={openEditSubcategory}>
-                ✏️ Edit this sub heading
-              </button>
-              <button
-                className={styles.deleteBtn}
-                onClick={() => {
-                  setDeleteTarget({
-                    type: "subcategory",
-                    id: selectedSubcategoryId,
-                    message:
-                      "Are you sure you want to delete this sub heading? Its cards will be deleted too.",
-                  });
-                  setShowDeleteModal(true);
-                }}
-              >
-                🗑️ Delete this sub heading
-              </button>
-            </div>
-          )}
-
-          <button
-            type="button"
-            className={styles.toggleCreate}
-            onClick={() =>
-              showSubForm ? setShowSubForm(false) : openCreateSubcategory()
-            }
-          >
-            {showSubForm ? "▾" : "▸"} + &quot;{selectedCategory?.categoryName}
-            &quot; ke andar nai sub heading banao
-          </button>
-
-          {showSubForm && (
-            <form className={styles.createPanel} onSubmit={submitSubForm}>
-              <input
-                type="text"
-                placeholder="Sub Heading Name (e.g. Namaz, Wudu)"
-                value={subForm.subcategoryName}
-                onChange={(e) =>
-                  setSubForm({ ...subForm, subcategoryName: e.target.value })
-                }
-                required
-              />
-              <input
-                type="number"
-                min="1"
-                placeholder="Index (optional, e.g. 2)"
-                value={subForm.position}
-                onChange={(e) =>
-                  setSubForm({ ...subForm, position: e.target.value })
-                }
-              />
-              <div className={styles.createActions}>
-                <button type="submit" className={styles.editBtn}>
-                  {editingSubcategory ? "Update" : "Create"}
-                </button>
-                <button
-                  type="button"
-                  className={styles.deleteBtn}
-                  onClick={() => setShowSubForm(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-      )}
-
-      {/* Step 3: Add detail card */}
-      {selectedCategoryId && (
-        <div className={styles.stepCard}>
-          <p className={styles.stepTitle}>
-            <span className={styles.stepBadge}>3</span>
-            &quot;
-            {selectedSubcategory?.subcategoryName ||
-              selectedCategory?.categoryName}
-            &quot; mein naya detail card add karo
-          </p>
-
-          <button
-            type="button"
-            className={styles.toggleCreate}
-            onClick={() =>
-              showItemForm ? setShowItemForm(false) : openCreateItem()
-            }
-          >
-            {showItemForm ? "▾" : "▸"} + Add Detail Card
-          </button>
-
-          {showItemForm && (
-            <form className={styles.createPanel} onSubmit={submitItemForm}>
-              <input
-                type="text"
-                placeholder="Title (e.g. Link ka naam, jo link par click hoga)"
-                value={itemForm.title}
-                onChange={(e) =>
-                  setItemForm({ ...itemForm, title: e.target.value })
-                }
-              />
-              <input
-                type="text"
-                placeholder="Subheading (optional)"
-                value={itemForm.subheading}
-                onChange={(e) =>
-                  setItemForm({ ...itemForm, subheading: e.target.value })
-                }
-              />
-              <textarea
-                placeholder="Detail (optional)"
-                value={itemForm.detail}
-                onChange={(e) =>
-                  setItemForm({ ...itemForm, detail: e.target.value })
-                }
-              />
-
-              <div className={styles.widgetSection}>
                 <label className={styles.widgetSectionLabel}>
                   <input
                     type="checkbox"
-                    checked={itemForm.config.table}
+                    checked={categoryForm.protected}
                     onChange={(e) =>
-                      setItemForm({
-                        ...itemForm,
-                        config: {
-                          ...itemForm.config,
-                          table: e.target.checked,
-                        },
+                      setCategoryForm({
+                        ...categoryForm,
+                        protected: e.target.checked,
                       })
                     }
                   />
-                  📊 Table (is card mein dynamic responsive table dikhao)
+                  🔒 Protect (if you don&apos;t enter the special code at login,
+                  this category won&apos;t show in the dropdown/main page)
                 </label>
 
-                {itemForm.config.table && (
-                  <>
-                    <p className={styles.widgetGridCaption}>
-                      Advanced Detail Card (optional) — Table, Tabs, PDF/JSON,
-                      Pagination, Search, Filter
-                    </p>
-                    <div className={styles.checkboxGrid}>
-                      {WIDGET_OPTIONS.map((opt) => (
-                        <label key={opt.key} className={styles.checkboxItem}>
-                          <input
-                            type="checkbox"
-                            checked={itemForm.config[opt.key]}
-                            onChange={(e) =>
-                              setItemForm({
-                                ...itemForm,
-                                config: {
-                                  ...itemForm.config,
-                                  [opt.key]: e.target.checked,
-                                },
-                              })
-                            }
-                          />
-                          <span className={styles.checkboxIcon}>{opt.icon}</span>
-                          {opt.label}
-                        </label>
-                      ))}
-                    </div>
-
-                    <div className={styles.inlineRow} style={{ marginBottom: "0.8rem" }}>
-                      <label
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                          fontSize: "0.85rem",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Nayi row kahan add ho:
-                      </label>
-                      <select
-                        value={itemForm.config.newRowPosition || "top"}
-                        onChange={(e) =>
-                          setItemForm({
-                            ...itemForm,
-                            config: {
-                              ...itemForm.config,
-                              newRowPosition: e.target.value,
-                            },
-                          })
-                        }
-                      >
-                        <option value="top">⬆️ Sab se upar (latest first)</option>
-                        <option value="bottom">⬇️ Sab se neeche (oldest first)</option>
-                      </select>
-                    </div>
-
-                    <div className={styles.fieldsBuilder}>
-                      <p className={styles.fieldsBuilderLabel}>
-                        Table ke columns / fields (jo marzi naam rakho):
-                      </p>
-
-                      {itemForm.fields.length > 0 && (
-                        <div className={styles.fieldChips}>
-                          {itemForm.fields.map((f, idx) => (
-                            <span
-                              key={f._id || `new-${idx}`}
-                              className={`${styles.fieldChip} ${
-                                editingFieldIndex === idx
-                                  ? styles.fieldChipEditing
-                                  : ""
-                              }`}
-                            >
-                              {f.type === "encrypt" && "🔒 "}
-                              {f.label} <em>({f.type})</em>
-                              <button
-                                type="button"
-                                title="Edit"
-                                onClick={() => {
-                                  setEditingFieldIndex(idx);
-                                  setNewFieldLabel(f.label);
-                                  setNewFieldType(f.type || "text");
-                                }}
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                type="button"
-                                title="Delete"
-                                onClick={() => {
-                                  setItemForm({
-                                    ...itemForm,
-                                    fields: itemForm.fields.filter(
-                                      (_, i) => i !== idx,
-                                    ),
-                                  });
-                                  if (editingFieldIndex === idx) {
-                                    setEditingFieldIndex(null);
-                                    setNewFieldLabel("");
-                                    setNewFieldType("text");
-                                  }
-                                }}
-                              >
-                                ✕
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className={styles.inlineRow}>
-                        <input
-                          type="text"
-                          placeholder="Field name (e.g. Month, Reading, Amount)"
-                          value={newFieldLabel}
-                          onChange={(e) => setNewFieldLabel(e.target.value)}
-                        />
-                        <select
-                          value={newFieldType}
-                          onChange={(e) => setNewFieldType(e.target.value)}
-                        >
-                          <option value="text">Text</option>
-                          <option value="number">Number</option>
-                          <option value="date">Date</option>
-                          <option value="email">Email</option>
-                          <option value="encrypt">
-                            🔒 Encrypt (DB mein encrypted, UI mein plain)
-                          </option>
-                          <option value="file">📎 File Upload</option>
-                        </select>
-                        <button
-                          type="button"
-                          className={styles.ghostBtn}
-                          onClick={() => {
-                            if (!newFieldLabel.trim()) return;
-                            if (editingFieldIndex !== null) {
-                              setItemForm({
-                                ...itemForm,
-                                fields: itemForm.fields.map((f, i) =>
-                                  i === editingFieldIndex
-                                    ? {
-                                        ...f,
-                                        label: newFieldLabel.trim(),
-                                        type: newFieldType,
-                                      }
-                                    : f,
-                                ),
-                              });
-                              setEditingFieldIndex(null);
-                            } else {
-                              setItemForm({
-                                ...itemForm,
-                                fields: [
-                                  ...itemForm.fields,
-                                  { label: newFieldLabel.trim(), type: newFieldType },
-                                ],
-                              });
-                            }
-                            setNewFieldLabel("");
-                            setNewFieldType("text");
-                          }}
-                        >
-                          {editingFieldIndex !== null ? "Update Field" : "+ Add Field"}
-                        </button>
-                        {editingFieldIndex !== null && (
-                          <button
-                            type="button"
-                            className={styles.deleteBtn}
-                            onClick={() => {
-                              setEditingFieldIndex(null);
-                              setNewFieldLabel("");
-                              setNewFieldType("text");
-                            }}
-                          >
-                            Cancel
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </>
+                {categoryForm.protected && (
+                  <div
+                    className={styles.inlineRow}
+                    style={{ marginTop: "0.5rem" }}
+                  >
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Auto-lock after how many minutes? (leave blank to stay unlocked for the whole session)"
+                      value={categoryForm.protectTimeoutMinutes}
+                      onChange={(e) =>
+                        setCategoryForm({
+                          ...categoryForm,
+                          protectTimeoutMinutes: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
                 )}
-              </div>
-
-              <input
-                type="text"
-                placeholder="Link (optional)"
-                value={itemForm.link}
-                onChange={(e) =>
-                  setItemForm({ ...itemForm, link: e.target.value })
-                }
-              />
-              <input
-                type="number"
-                min="1"
-                placeholder="Index (optional, e.g. 2)"
-                value={itemForm.position}
-                onChange={(e) =>
-                  setItemForm({ ...itemForm, position: e.target.value })
-                }
-              />
-              <div className={styles.createActions}>
-                <button type="submit" className={styles.editBtn}>
-                  {editingItemId ? "Update" : "Create"}
-                </button>
-                <button
-                  type="button"
-                  className={styles.deleteBtn}
-                  onClick={() => {
-                    setShowItemForm(false);
-                    setEditingItemId(null);
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-      )}
-
-      {/* Step 4: List of detail cards */}
-      {selectedCategoryId && (
-        <div className={styles.stepCard}>
-          <p className={styles.stepTitle}>
-            <span className={styles.stepBadge}>4</span>
-            &quot;
-            {selectedSubcategory?.subcategoryName ||
-              selectedCategory?.categoryName}
-            &quot; ke detail cards ({items.length})
-          </p>
-
-          {items.length === 0 && (
-            <p className={styles.disabledHint}>Koi card nahi bana abhi.</p>
-          )}
-
-          <div className={styles.detailList}>
-            {items.map((item, index) => (
-              <div key={item._id} className={styles.detailRow}>
-                <span className={styles.detailNumber}>{index + 1}</span>
-                <div className={styles.detailBody}>
-                  {item.title && (
-                    <p className={styles.detailTitle}>{item.title}</p>
-                  )}
-                  {item.subheading && (
-                    <p className={styles.detailSubheading}>
-                      {item.subheading}
-                    </p>
-                  )}
-                  {item.detail && (
-                    <p className={styles.detailText}>{item.detail}</p>
-                  )}
-                  {item.link && (
-                    <a
-                      href={item.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.cardLink}
-                    >
-                      {item.link}
-                    </a>
-                  )}
+                <div className={styles.createActions}>
+                  <button type="submit" className={styles.editBtn}>
+                    {editingCategory ? "Update" : "Create"}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.deleteBtn}
+                    onClick={() => setShowCategoryForm(false)}
+                  >
+                    Cancel
+                  </button>
                 </div>
-                <div className={styles.detailActions}>
-                  <span onClick={() => openEditItem(item)} title="Edit">
-                    ✏️
-                  </span>
-                  <span
+              </form>
+            )}
+          </div>
+
+          {}
+          {selectedCategoryId && (
+            <div className={styles.stepCard}>
+              <p className={styles.stepTitle}>
+                <span className={styles.stepBadge}>2</span>
+                Select a Sub Heading inside &quot;
+                {selectedCategory?.categoryName}
+                &quot;
+              </p>
+
+              <select
+                className={styles.select}
+                value={selectedSubcategoryId}
+                onChange={(e) => setSelectedSubcategoryId(e.target.value)}
+              >
+                <option value="">
+                  — Select — (Direct cards, no sub heading)
+                </option>
+                {subcategories.map((s) => (
+                  <option key={s._id} value={s._id}>
+                    {s.subcategoryName}
+                  </option>
+                ))}
+              </select>
+
+              {selectedSubcategory && (
+                <div className={styles.groupButtons}>
+                  <button
+                    className={styles.editBtn}
+                    onClick={openEditSubcategory}
+                  >
+                    ✏️ Edit this sub heading
+                  </button>
+                  <button
+                    className={styles.deleteBtn}
                     onClick={() => {
                       setDeleteTarget({
-                        type: "item",
-                        id: item._id,
-                        message: "Are you sure you want to delete this card?",
+                        type: "subcategory",
+                        id: selectedSubcategoryId,
+                        message:
+                          "Are you sure you want to delete this sub heading? Its cards will be deleted too.",
                       });
                       setShowDeleteModal(true);
                     }}
-                    title="Delete"
                   >
-                    🗑️
-                  </span>
+                    🗑️ Delete this sub heading
+                  </button>
                 </div>
+              )}
+
+              <button
+                type="button"
+                className={styles.toggleCreate}
+                onClick={() =>
+                  showSubForm ? setShowSubForm(false) : openCreateSubcategory()
+                }
+              >
+                {showSubForm ? "▾" : "▸"} + Create a new sub heading inside
+                &quot;
+                {selectedCategory?.categoryName}&quot;
+              </button>
+
+              {showSubForm && (
+                <form className={styles.createPanel} onSubmit={submitSubForm}>
+                  <input
+                    type="text"
+                    placeholder="Sub Heading Name (e.g. Namaz, Wudu)"
+                    value={subForm.subcategoryName}
+                    onChange={(e) =>
+                      setSubForm({
+                        ...subForm,
+                        subcategoryName: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="Index (optional, e.g. 2)"
+                    value={subForm.position}
+                    onChange={(e) =>
+                      setSubForm({ ...subForm, position: e.target.value })
+                    }
+                  />
+                  <div className={styles.createActions}>
+                    <button type="submit" className={styles.editBtn}>
+                      {editingSubcategory ? "Update" : "Create"}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.deleteBtn}
+                      onClick={() => setShowSubForm(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
+
+          {}
+          {selectedCategoryId && (
+            <div className={styles.stepCard}>
+              <p className={styles.stepTitle}>
+                <span className={styles.stepBadge}>3</span>
+                Add a new detail card in &quot;
+                {selectedSubcategory?.subcategoryName ||
+                  selectedCategory?.categoryName}
+                &quot;
+              </p>
+
+              <button
+                type="button"
+                className={styles.toggleCreate}
+                onClick={() =>
+                  showItemForm ? setShowItemForm(false) : openCreateItem()
+                }
+              >
+                {showItemForm ? "▾" : "▸"} + Add Detail Card
+              </button>
+
+              {showItemForm && (
+                <form className={styles.createPanel} onSubmit={submitItemForm}>
+                  <input
+                    type="text"
+                    placeholder="Title (e.g. the link's name, shown as clickable text)"
+                    value={itemForm.title}
+                    onChange={(e) =>
+                      setItemForm({ ...itemForm, title: e.target.value })
+                    }
+                  />
+                  <input
+                    type="text"
+                    placeholder="Subheading (optional)"
+                    value={itemForm.subheading}
+                    onChange={(e) =>
+                      setItemForm({ ...itemForm, subheading: e.target.value })
+                    }
+                  />
+                  <textarea
+                    placeholder="Detail (optional)"
+                    value={itemForm.detail}
+                    onChange={(e) =>
+                      setItemForm({ ...itemForm, detail: e.target.value })
+                    }
+                  />
+
+                  <div className={styles.widgetSection}>
+                    <p className={styles.widgetGridCaption}>
+                      Card type (optional) — pick Table for rows/columns, Tabs
+                      for named groups, or both
+                    </p>
+                    <div className={styles.checkboxGrid}>
+                      <label className={styles.checkboxItem}>
+                        <input
+                          type="checkbox"
+                          checked={itemForm.config.table}
+                          onChange={(e) =>
+                            setItemForm({
+                              ...itemForm,
+                              config: {
+                                ...itemForm.config,
+                                table: e.target.checked,
+                              },
+                            })
+                          }
+                        />
+                        <span className={styles.checkboxIcon}>📊</span>
+                        Table (dynamic responsive table)
+                      </label>
+                      <label className={styles.checkboxItem}>
+                        <input
+                          type="checkbox"
+                          checked={itemForm.config.tabs}
+                          onChange={(e) =>
+                            setItemForm({
+                              ...itemForm,
+                              config: {
+                                ...itemForm.config,
+                                tabs: e.target.checked,
+                              },
+                            })
+                          }
+                        />
+                        <span className={styles.checkboxIcon}>📁</span>
+                        Tabs (groups like Meter 1 / Meter 2)
+                      </label>
+                    </div>
+
+                    {itemForm.config.tabs && !itemForm.config.table && (
+                      <p
+                        style={{
+                          fontSize: "0.78rem",
+                          opacity: 0.75,
+                          margin: "0.4rem 0 0",
+                        }}
+                      >
+                        Table isn&apos;t enabled, so each tab will show a simple
+                        list of title + link cards instead of a data table (add
+                        them from the card itself).
+                      </p>
+                    )}
+
+                    {(itemForm.config.table || itemForm.config.tabs) && (
+                      <>
+                        <p className={styles.widgetGridCaption}>
+                          Advanced options (optional)
+                        </p>
+                        <div className={styles.checkboxGrid}>
+                          {WIDGET_OPTIONS.filter(
+                            (opt) => opt.key !== "table" && opt.key !== "tabs",
+                          ).map((opt) => (
+                            <label
+                              key={opt.key}
+                              className={styles.checkboxItem}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={itemForm.config[opt.key]}
+                                onChange={(e) =>
+                                  setItemForm({
+                                    ...itemForm,
+                                    config: {
+                                      ...itemForm.config,
+                                      [opt.key]: e.target.checked,
+                                    },
+                                  })
+                                }
+                              />
+                              <span className={styles.checkboxIcon}>
+                                {opt.icon}
+                              </span>
+                              {opt.label}
+                            </label>
+                          ))}
+                        </div>
+
+                        {itemForm.config.table && (
+                          <>
+                            <div
+                              className={styles.inlineRow}
+                              style={{ marginBottom: "0.8rem" }}
+                            >
+                              <label
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "0.5rem",
+                                  fontSize: "0.85rem",
+                                  fontWeight: 600,
+                                }}
+                              >
+                                New rows are added to:
+                              </label>
+                              <select
+                                value={itemForm.config.newRowPosition || "top"}
+                                onChange={(e) =>
+                                  setItemForm({
+                                    ...itemForm,
+                                    config: {
+                                      ...itemForm.config,
+                                      newRowPosition: e.target.value,
+                                    },
+                                  })
+                                }
+                              >
+                                <option value="top">
+                                  ⬆️ Top (latest first)
+                                </option>
+                                <option value="bottom">
+                                  ⬇️ Bottom (oldest first)
+                                </option>
+                              </select>
+                            </div>
+
+                            <div
+                              className={styles.widgetGridCaption}
+                              style={{ marginTop: "0.8rem" }}
+                            >
+                              Custom notifications (optional) — leave blank to
+                              use the default message
+                            </div>
+                            <div
+                              className={styles.checkboxGrid}
+                              style={{ gridTemplateColumns: "1fr" }}
+                            >
+                              <input
+                                type="text"
+                                placeholder="Message when a row is added (e.g. Meter reading added)"
+                                value={itemForm.config.messages?.rowAdded || ""}
+                                onChange={(e) =>
+                                  setItemForm({
+                                    ...itemForm,
+                                    config: {
+                                      ...itemForm.config,
+                                      messages: {
+                                        ...itemForm.config.messages,
+                                        rowAdded: e.target.value,
+                                      },
+                                    },
+                                  })
+                                }
+                              />
+                              <input
+                                type="text"
+                                placeholder="Message when a row is updated"
+                                value={
+                                  itemForm.config.messages?.rowUpdated || ""
+                                }
+                                onChange={(e) =>
+                                  setItemForm({
+                                    ...itemForm,
+                                    config: {
+                                      ...itemForm.config,
+                                      messages: {
+                                        ...itemForm.config.messages,
+                                        rowUpdated: e.target.value,
+                                      },
+                                    },
+                                  })
+                                }
+                              />
+                              <input
+                                type="text"
+                                placeholder="Message when a row is deleted"
+                                value={
+                                  itemForm.config.messages?.rowDeleted || ""
+                                }
+                                onChange={(e) =>
+                                  setItemForm({
+                                    ...itemForm,
+                                    config: {
+                                      ...itemForm.config,
+                                      messages: {
+                                        ...itemForm.config.messages,
+                                        rowDeleted: e.target.value,
+                                      },
+                                    },
+                                  })
+                                }
+                              />
+                            </div>
+
+                            <div className={styles.fieldsBuilder}>
+                              <p className={styles.fieldsBuilderLabel}>
+                                Table columns / fields (name them anything you
+                                like):
+                              </p>
+
+                              {itemForm.fields.length > 0 && (
+                                <div className={styles.fieldChips}>
+                                  {itemForm.fields.map((f, idx) => (
+                                    <span
+                                      key={f._id || `new-${idx}`}
+                                      className={`${styles.fieldChip} ${
+                                        editingFieldIndex === idx
+                                          ? styles.fieldChipEditing
+                                          : ""
+                                      }`}
+                                    >
+                                      {f.type === "encrypt" && "🔒 "}
+                                      {f.label} <em>({f.type})</em>
+                                      <button
+                                        type="button"
+                                        title="Edit"
+                                        onClick={() => {
+                                          setEditingFieldIndex(idx);
+                                          setNewFieldLabel(f.label);
+                                          setNewFieldType(f.type || "text");
+                                        }}
+                                      >
+                                        ✏️
+                                      </button>
+                                      <button
+                                        type="button"
+                                        title="Delete"
+                                        onClick={() => {
+                                          setItemForm({
+                                            ...itemForm,
+                                            fields: itemForm.fields.filter(
+                                              (_, i) => i !== idx,
+                                            ),
+                                          });
+                                          if (editingFieldIndex === idx) {
+                                            setEditingFieldIndex(null);
+                                            setNewFieldLabel("");
+                                            setNewFieldType("text");
+                                          }
+                                        }}
+                                      >
+                                        ✕
+                                      </button>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+
+                              <div className={styles.inlineRow}>
+                                <input
+                                  type="text"
+                                  placeholder="Field name (e.g. Month, Reading, Amount)"
+                                  value={newFieldLabel}
+                                  onChange={(e) =>
+                                    setNewFieldLabel(e.target.value)
+                                  }
+                                />
+                                <select
+                                  value={newFieldType}
+                                  onChange={(e) =>
+                                    setNewFieldType(e.target.value)
+                                  }
+                                >
+                                  <option value="text">Text</option>
+                                  <option value="number">Number</option>
+                                  <option value="date">Date</option>
+                                  <option value="email">Email</option>
+                                  <option value="encrypt">
+                                    🔒 Encrypt (stored encrypted in the DB,
+                                    shown as plain text in the UI)
+                                  </option>
+                                  <option value="file">📎 File Upload</option>
+                                </select>
+                                <button
+                                  type="button"
+                                  className={styles.ghostBtn}
+                                  onClick={() => {
+                                    if (!newFieldLabel.trim()) return;
+                                    if (editingFieldIndex !== null) {
+                                      setItemForm({
+                                        ...itemForm,
+                                        fields: itemForm.fields.map((f, i) =>
+                                          i === editingFieldIndex
+                                            ? {
+                                                ...f,
+                                                label: newFieldLabel.trim(),
+                                                type: newFieldType,
+                                              }
+                                            : f,
+                                        ),
+                                      });
+                                      setEditingFieldIndex(null);
+                                    } else {
+                                      setItemForm({
+                                        ...itemForm,
+                                        fields: [
+                                          ...itemForm.fields,
+                                          {
+                                            label: newFieldLabel.trim(),
+                                            type: newFieldType,
+                                          },
+                                        ],
+                                      });
+                                    }
+                                    setNewFieldLabel("");
+                                    setNewFieldType("text");
+                                  }}
+                                >
+                                  {editingFieldIndex !== null
+                                    ? "Update Field"
+                                    : "+ Add Field"}
+                                </button>
+                                {editingFieldIndex !== null && (
+                                  <button
+                                    type="button"
+                                    className={styles.deleteBtn}
+                                    onClick={() => {
+                                      setEditingFieldIndex(null);
+                                      setNewFieldLabel("");
+                                      setNewFieldType("text");
+                                    }}
+                                  >
+                                    Cancel
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  <input
+                    type="text"
+                    placeholder="Link (optional)"
+                    value={itemForm.link}
+                    onChange={(e) =>
+                      setItemForm({ ...itemForm, link: e.target.value })
+                    }
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="Index (optional, e.g. 2)"
+                    value={itemForm.position}
+                    onChange={(e) =>
+                      setItemForm({ ...itemForm, position: e.target.value })
+                    }
+                  />
+                  <div className={styles.createActions}>
+                    <button type="submit" className={styles.editBtn}>
+                      {editingItemId ? "Update" : "Create"}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.deleteBtn}
+                      onClick={() => {
+                        setShowItemForm(false);
+                        setEditingItemId(null);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
+
+          {}
+          {selectedCategoryId && (
+            <div className={styles.stepCard}>
+              <p className={styles.stepTitle}>
+                <span className={styles.stepBadge}>4</span>
+                Detail cards in &quot;
+                {selectedSubcategory?.subcategoryName ||
+                  selectedCategory?.categoryName}
+                &quot; ({items.length})
+              </p>
+
+              {items.length === 0 && (
+                <p className={styles.disabledHint}>No cards created yet.</p>
+              )}
+
+              <div className={styles.detailList}>
+                {items.map((item, index) => (
+                  <div key={item._id} className={styles.detailRow}>
+                    <span className={styles.detailNumber}>{index + 1}</span>
+                    <div className={styles.detailBody}>
+                      {item.title && (
+                        <p className={styles.detailTitle}>{item.title}</p>
+                      )}
+                      {item.subheading && (
+                        <p className={styles.detailSubheading}>
+                          {item.subheading}
+                        </p>
+                      )}
+                      {item.detail && (
+                        <p className={styles.detailText}>{item.detail}</p>
+                      )}
+                      {item.link && (
+                        <a
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.cardLink}
+                        >
+                          {item.link}
+                        </a>
+                      )}
+                    </div>
+                    <div className={styles.detailActions}>
+                      <span onClick={() => openEditItem(item)} title="Edit">
+                        ✏️
+                      </span>
+                      <span
+                        onClick={() => {
+                          setDeleteTarget({
+                            type: "item",
+                            id: item._id,
+                            message:
+                              "Are you sure you want to delete this card?",
+                          });
+                          setShowDeleteModal(true);
+                        }}
+                        title="Delete"
+                      >
+                        🗑️
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+            </div>
+          )}
         </>
       )}
     </div>

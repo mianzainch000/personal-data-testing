@@ -3,8 +3,8 @@ import axios from "axios";
 import Link from "next/link";
 import Button from "@/components/Button";
 import Loader from "@/components/Loader";
-import UnlockProtected from "@/components/UnlockProtected";
 import { useEffect, useState } from "react";
+import UnlockProtected from "@/components/UnlockProtected";
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
@@ -45,8 +45,8 @@ const Categories = () => {
 
       {!loading && categories.length === 0 && (
         <p style={{ textAlign: "center", opacity: 0.8 }}>
-          Abhi tak koi category nahi hai. &quot;Manage Categories&quot; se apni
-          pehli category (Heading) add karein.
+          No categories yet. Add your first category (Heading) from &quot;Manage
+          Categories&quot;.
         </p>
       )}
 

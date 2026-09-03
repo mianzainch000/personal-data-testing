@@ -24,9 +24,12 @@ export async function GET(req, { params }) {
       },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ message: "Failed", error: String(error) }), {
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ message: "Failed", error: String(error) }),
+      {
+        status: 500,
+      },
+    );
   }
 }
 

@@ -6,11 +6,8 @@ const UploadedFile = require("../models/uploadedFileSchema");
 const { encrypt, decryptTabsValues } = require("../helper/itemCrypto");
 const { isCategoryAccessible } = require("../helper/categoryAccess");
 
-const MAX_EMBEDDED_FILE_SIZE = 3 * 1024 * 1024; // keep consistent with fileController's limit
+const MAX_EMBEDDED_FILE_SIZE = 3 * 1024 * 1024;
 
-// Turns one Item document into a portable, label-keyed plain object
-// (decrypting "encrypt" fields and embedding actual file bytes for "file"
-// fields, so the backup is fully self-contained and human-portable).
 const serializeItem = async (item) => {
   const fields = item.fields || [];
   const decryptedTabs = decryptTabsValues(item.tabs || [], fields);
@@ -21,7 +18,14 @@ const serializeItem = async (item) => {
   const tabs = await Promise.all(
     decryptedTabs.map(async (t) => ({
       tabName: t.tabName || "",
+      detail: t.detail || "",
+      link: t.link || "",
       order: t.order || 0,
+      cards: (t.cards || []).map((c) => ({
+        title: c.title || "",
+        link: c.link || "",
+        order: c.order || 0,
+      })),
       rows: await Promise.all(
         (t.rows || []).map(async (r) => {
           const values = {};
@@ -64,10 +68,12 @@ const serializeItem = async (item) => {
   };
 };
 
-// Rebuilds an Item doc payload from a backup's serialized item, generating
-// fresh field _ids, re-encrypting "encrypt" fields, and creating real
-// UploadedFile documents for any embedded "file" field data.
-const buildItemFromBackup = async (itemData, categoryId, subcategoryId, userId) => {
+const buildItemFromBackup = async (
+  itemData,
+  categoryId,
+  subcategoryId,
+  userId,
+) => {
   const fieldsWithIds = (itemData.fields || []).map((f) => ({
     _id: new mongoose.Types.ObjectId(),
     label: f.label,
@@ -92,10 +98,15 @@ const buildItemFromBackup = async (itemData, categoryId, subcategoryId, userId) 
         const fid = labelToId[label];
         if (!fid) continue;
 
-        if (fileIds.has(fid) && val && typeof val === "object" && val.dataBase64) {
+        if (
+          fileIds.has(fid) &&
+          val &&
+          typeof val === "object" &&
+          val.dataBase64
+        ) {
           const buffer = Buffer.from(val.dataBase64, "base64");
           if (buffer.length > MAX_EMBEDDED_FILE_SIZE) {
-            continue; // skip oversized embedded files rather than failing the whole import
+            continue;
           }
           const newFile = await UploadedFile.create({
             fileName: val.fileName || "file",
@@ -115,7 +126,18 @@ const buildItemFromBackup = async (itemData, categoryId, subcategoryId, userId) 
       }
       rows.push({ order: r.order || 0, values });
     }
-    tabs.push({ tabName: t.tabName || "", order: t.order || 0, rows });
+    tabs.push({
+      tabName: t.tabName || "",
+      detail: t.detail || "",
+      link: t.link || "",
+      order: t.order || 0,
+      rows,
+      cards: (t.cards || []).map((c) => ({
+        title: c.title || "",
+        link: c.link || "",
+        order: c.order || 0,
+      })),
+    });
   }
 
   return {
@@ -142,8 +164,6 @@ exports.exportBackup = async (req, res) => {
       Item.find({ userId }).sort({ order: 1, createdAt: 1 }),
     ]);
 
-    // Never leak a currently-locked protected category into a backup file —
-    // only include it if this session has actually unlocked it.
     const categories = allCategories.filter((c) =>
       isCategoryAccessible(c, req.user),
     );
@@ -207,10 +227,6 @@ exports.exportBackup = async (req, res) => {
   }
 };
 
-// For each category in the file, if a category with the SAME NAME already
-// exists for this user, it is fully replaced (deleted, then recreated from
-// the file) so re-importing the same backup never creates duplicates.
-// Categories NOT present in the file are left completely untouched.
 exports.importBackup = async (req, res) => {
   try {
     const userId = req.user._id;

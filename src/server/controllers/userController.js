@@ -157,10 +157,6 @@ exports.login = async (req, res) => {
   }
 };
 
-// Re-checks the special code for an already logged-in user (req.user set by
-// the `authenticate` middleware) and issues a fresh token with hasAccess:true
-// and a new `iat`. Lets a protected/auto-locked category be unlocked again
-// without a full logout + login.
 exports.verifySpecialCode = async (req, res) => {
   try {
     const { specialCode } = req.body;

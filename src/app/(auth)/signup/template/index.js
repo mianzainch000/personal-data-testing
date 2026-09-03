@@ -1,9 +1,9 @@
 "use client";
 import axios from "axios";
 import Link from "next/link";
+import { useState } from "react";
 import Loader from "@/components/Loader";
 import styles from "@/css/Auth.module.css";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiConfig } from "@/config/apiConfig";
 import { useSnackbar } from "@/components/Snackbar";

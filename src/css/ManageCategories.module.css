@@ -21,8 +21,8 @@
 }
 
 .form label {
-  font-size: 0.85rem;
   font-weight: 600;
+  font-size: 0.85rem;
   color: var(--text-primary);
 }
 
@@ -31,8 +31,8 @@
   width: 100%;
   padding: 0.6rem;
   margin-top: 6px;
-  font-family: inherit;
   border-radius: 6px;
+  font-family: inherit;
   color: var(--text-primary);
   background-color: var(--color-ghost);
   border: 1px solid var(--color-ghost-hover);
@@ -49,9 +49,9 @@
 }
 
 .hint {
+  opacity: 0.7;
   margin: 4px 0 0;
   font-size: 0.75rem;
-  opacity: 0.7;
 }
 
 .formActions {
@@ -68,8 +68,8 @@
   cursor: pointer;
   border-radius: 6px;
   color: var(--text-inverse);
-  background-color: var(--color-primary);
   transition: opacity 0.2s ease;
+  background-color: var(--color-primary);
 }
 
 .submitButton:hover {
@@ -78,12 +78,12 @@
 
 .cancelButton {
   border: none;
-  padding: 0.7rem 1rem;
   cursor: pointer;
   border-radius: 6px;
+  padding: 0.7rem 1rem;
   color: var(--text-inverse);
-  background-color: var(--color-danger);
   transition: opacity 0.2s ease;
+  background-color: var(--color-danger);
 }
 
 .cancelButton:hover {
@@ -97,8 +97,8 @@
 }
 
 .card {
-  padding: 1rem 1.2rem;
   border-radius: 12px;
+  padding: 1rem 1.2rem;
   color: var(--text-primary);
   box-shadow: var(--card-shadow);
   background-color: var(--card-bg);
@@ -129,30 +129,30 @@
 
 .cardName {
   margin: 0;
-  font-size: 1.05rem;
   font-weight: 600;
+  font-size: 1.05rem;
 }
 
 .cardLink {
   display: block;
-  font-size: 0.8rem;
   margin-top: 2px;
-  color: var(--color-primary);
+  font-size: 0.8rem;
   word-break: break-all;
+  color: var(--color-primary);
 }
 
 .cardDetail {
+  opacity: 0.85;
   margin: 6px 0 0;
   font-size: 0.85rem;
-  opacity: 0.85;
   white-space: pre-wrap;
 }
 
 .cardActions {
   gap: 1.1rem;
   display: flex;
-  font-size: 18px;
   flex-shrink: 0;
+  font-size: 18px;
   cursor: pointer;
 }
 
@@ -161,8 +161,8 @@
   cursor: pointer;
   font-size: 0.8rem;
   margin-top: 0.7rem;
-  padding: 0.35rem 0.7rem;
   border-radius: 6px;
+  padding: 0.35rem 0.7rem;
   color: var(--text-primary);
   background-color: var(--color-ghost);
 }
@@ -187,9 +187,9 @@
 .subRow {
   gap: 0.6rem;
   display: flex;
+  border-radius: 8px;
   padding: 0.6rem 0.8rem;
   align-items: flex-start;
-  border-radius: 8px;
   justify-content: space-between;
   background-color: var(--color-ghost);
 }
@@ -212,15 +212,15 @@
 
 .subName {
   margin: 0;
-  font-size: 0.9rem;
   font-weight: 600;
+  font-size: 0.9rem;
 }
 
 .subActions {
   gap: 0.9rem;
   display: flex;
-  font-size: 15px;
   flex-shrink: 0;
+  font-size: 15px;
   cursor: pointer;
 }
 
@@ -233,9 +233,9 @@
 
 .stepCard {
   width: 100%;
-  padding: 1.4rem 1.5rem;
-  margin-bottom: 1.2rem;
   border-radius: 14px;
+  margin-bottom: 1.2rem;
+  padding: 1.4rem 1.5rem;
   color: var(--text-primary);
   box-shadow: var(--card-shadow);
   background-color: var(--card-bg);
@@ -244,8 +244,8 @@
 .stepTitle {
   gap: 0.6rem;
   display: flex;
-  font-weight: 700;
   font-size: 1rem;
+  font-weight: 700;
   margin: 0 0 0.9rem;
   align-items: center;
 }
@@ -253,10 +253,10 @@
 .stepBadge {
   width: 22px;
   height: 22px;
-  flex-shrink: 0;
   display: flex;
-  font-size: 0.8rem;
+  flex-shrink: 0;
   font-weight: 700;
+  font-size: 0.8rem;
   border-radius: 6px;
   align-items: center;
   justify-content: center;
@@ -266,9 +266,9 @@
 
 .select {
   width: 100%;
-  padding: 0.65rem 0.7rem;
   font-size: 0.95rem;
   border-radius: 8px;
+  padding: 0.65rem 0.7rem;
   color: var(--text-primary);
   background-color: var(--color-ghost);
   border: 1px solid var(--color-ghost-hover);
@@ -281,8 +281,8 @@
 .groupButtons {
   gap: 0.6rem;
   display: flex;
-  margin-top: 0.8rem;
   flex-wrap: wrap;
+  margin-top: 0.8rem;
 }
 
 .editBtn {
@@ -290,11 +290,13 @@
   cursor: pointer;
   font-weight: 600;
   font-size: 0.85rem;
-  padding: 0.55rem 1rem;
   border-radius: 8px;
+  padding: 0.55rem 1rem;
   color: var(--text-inverse);
   background-color: var(--color-primary);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .editBtn:hover {
@@ -307,11 +309,13 @@
   cursor: pointer;
   font-weight: 600;
   font-size: 0.85rem;
-  padding: 0.55rem 1rem;
   border-radius: 8px;
+  padding: 0.55rem 1rem;
   color: var(--text-inverse);
   background-color: var(--color-danger);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .deleteBtn:hover {
@@ -320,15 +324,15 @@
 }
 
 .ghostBtn {
-  border: 1px solid var(--color-ghost-hover);
   cursor: pointer;
   font-weight: 600;
   font-size: 0.85rem;
-  padding: 0.55rem 1rem;
   border-radius: 8px;
+  padding: 0.55rem 1rem;
   color: var(--text-primary);
   background-color: var(--color-ghost);
   transition: background-color 0.2s ease;
+  border: 1px solid var(--color-ghost-hover);
 }
 
 .ghostBtn:hover {
@@ -336,13 +340,13 @@
 }
 
 .toggleCreate {
+  padding: 0;
   border: none;
-  background: none;
   cursor: pointer;
+  background: none;
   font-weight: 600;
   font-size: 0.85rem;
   margin-top: 0.9rem;
-  padding: 0;
   color: var(--color-primary);
 }
 
@@ -362,11 +366,11 @@
 .createPanel input,
 .createPanel textarea {
   width: 100%;
-  padding: 0.65rem 0.75rem;
   font-size: 0.95rem;
-  font-family: inherit;
   border-radius: 8px;
+  font-family: inherit;
   box-sizing: border-box;
+  padding: 0.65rem 0.75rem;
   color: var(--text-primary);
   background-color: var(--color-ghost);
   border: 1px solid var(--color-ghost-hover);
@@ -384,8 +388,8 @@
 
 .createPanel input::placeholder,
 .createPanel textarea::placeholder {
-  color: var(--text-primary);
   opacity: 0.5;
+  color: var(--text-primary);
 }
 
 .inlineRow {
@@ -409,8 +413,8 @@
   cursor: pointer;
   font-weight: 600;
   font-size: 0.8rem;
-  padding: 0.4rem 0.8rem;
   border-radius: 999px;
+  padding: 0.4rem 0.8rem;
   margin: 0 0.3rem 0.3rem 0;
   color: var(--text-primary);
   background-color: var(--color-ghost);
@@ -422,9 +426,9 @@
 }
 
 .disabledHint {
-  font-size: 0.85rem;
-  opacity: 0.7;
   margin: 0;
+  opacity: 0.7;
+  font-size: 0.85rem;
 }
 
 .detailList {
@@ -437,8 +441,8 @@
 .detailRow {
   gap: 0.8rem;
   display: flex;
-  padding: 0.8rem 1rem;
   border-radius: 10px;
+  padding: 0.8rem 1rem;
   align-items: flex-start;
   background-color: var(--color-ghost);
 }
@@ -446,12 +450,12 @@
 .detailNumber {
   width: 24px;
   height: 24px;
-  flex-shrink: 0;
   display: flex;
-  font-size: 0.75rem;
+  flex-shrink: 0;
   font-weight: 700;
-  border-radius: 999px;
+  font-size: 0.75rem;
   align-items: center;
+  border-radius: 999px;
   justify-content: center;
   color: var(--text-inverse);
   background-color: var(--color-primary);
@@ -470,16 +474,16 @@
 }
 
 .detailSubheading {
+  opacity: 0.75;
   margin: 2px 0 0;
   font-size: 0.8rem;
-  opacity: 0.75;
   word-break: break-word;
 }
 
 .detailText {
+  opacity: 0.9;
   margin: 6px 0 0;
   font-size: 0.85rem;
-  opacity: 0.9;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -492,15 +496,13 @@
   cursor: pointer;
 }
 
-
-/* ---- Dynamic detail-card widgets (checkboxes + fields builder) ---- */
 .createPanel select {
   width: 100%;
-  padding: 0.65rem 0.75rem;
   font-size: 0.95rem;
-  font-family: inherit;
   border-radius: 8px;
+  font-family: inherit;
   box-sizing: border-box;
+  padding: 0.65rem 0.75rem;
   color: var(--text-primary);
   background-color: var(--color-ghost);
   border: 1px solid var(--color-ghost-hover);
@@ -513,50 +515,50 @@
 }
 
 .widgetGridCaption {
-  margin: 0.7rem 0 0.3rem;
-  font-size: 0.78rem;
   font-weight: 700;
+  font-size: 0.78rem;
   letter-spacing: 0.02em;
+  margin: 0.7rem 0 0.3rem;
   color: var(--color-primary);
 }
 
 .checkboxIcon {
-  display: inline-block;
   width: 1.1em;
+  display: inline-block;
 }
 
 .widgetSectionLabel {
-  display: flex;
-  align-items: center;
   gap: 0.5rem;
+  display: flex;
+  cursor: pointer;
   font-weight: 700;
   font-size: 0.9rem;
-  cursor: pointer;
+  align-items: center;
   color: var(--text-primary);
 }
 
 .widgetSectionLabel input {
-  width: auto !important;
   margin: 0 !important;
+  width: auto !important;
 }
 
 .checkboxGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 0.5rem 0.8rem;
-  margin: 0.7rem 0;
   padding: 0.7rem;
+  margin: 0.7rem 0;
+  gap: 0.5rem 0.8rem;
   border-radius: 8px;
   background-color: var(--color-ghost);
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
 }
 
 .checkboxItem {
-  display: flex;
-  align-items: flex-start;
   gap: 0.45rem;
-  font-size: 0.8rem;
-  line-height: 1.3;
+  display: flex;
   cursor: pointer;
+  line-height: 1.3;
+  font-size: 0.8rem;
+  align-items: flex-start;
   color: var(--text-primary);
 }
 
@@ -570,72 +572,71 @@
 }
 
 .fieldsBuilderLabel {
-  margin: 0 0 0.5rem;
-  font-size: 0.8rem;
-  font-weight: 600;
   opacity: 0.85;
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin: 0 0 0.5rem;
 }
 
 .fieldChips {
+  gap: 0.4rem;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
   margin-bottom: 0.6rem;
 }
 
 .fieldChip {
-  display: inline-flex;
-  align-items: center;
   gap: 0.35rem;
-  padding: 0.3rem 0.6rem;
-  border-radius: 999px;
   font-size: 0.78rem;
-  background-color: var(--color-primary);
+  align-items: center;
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 0.3rem 0.6rem;
   color: var(--text-inverse);
+  background-color: var(--color-primary);
 }
 
 .fieldChipEditing {
-  outline: 2px solid var(--color-danger);
   outline-offset: 2px;
+  outline: 2px solid var(--color-danger);
 }
 
 .fieldChip em {
   opacity: 0.8;
-  font-style: normal;
   font-size: 0.7rem;
+  font-style: normal;
 }
 
 .fieldChip button {
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: inherit;
-  font-size: 0.8rem;
-  line-height: 1;
   padding: 0;
+  border: none;
+  color: inherit;
+  line-height: 1;
+  cursor: pointer;
+  background: none;
+  font-size: 0.8rem;
 }
 
-/* ---- Content / Backup admin tab switcher ---- */
 .adminTabs {
-  display: flex;
   gap: 0.6rem;
-  justify-content: center;
-  margin: 0 auto 1.2rem;
-  max-width: 700px;
+  display: flex;
   padding: 0 1rem;
+  max-width: 700px;
+  margin: 0 auto 1.2rem;
+  justify-content: center;
 }
 
 .adminTabBtn {
   flex: 1;
-  padding: 0.7rem 1rem;
-  border-radius: 10px;
-  border: 1px solid var(--color-ghost-hover);
-  background-color: var(--color-ghost);
-  color: var(--text-primary);
+  cursor: pointer;
   font-weight: 600;
   font-size: 0.9rem;
-  cursor: pointer;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
   transition: all 0.2s ease;
+  color: var(--text-primary);
+  background-color: var(--color-ghost);
+  border: 1px solid var(--color-ghost-hover);
 }
 
 .adminTabBtn:hover {
@@ -643,7 +644,7 @@
 }
 
 .adminTabActive {
-  background-color: var(--color-primary);
   color: var(--text-inverse);
   border-color: var(--color-primary);
+  background-color: var(--color-primary);
 }

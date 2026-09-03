@@ -3,11 +3,9 @@ import axios from "axios";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useSnackbar } from "@/components/Snackbar";
-import handleAxiosError from "@/components/HandleAxiosError";
 import styles from "@/css/DynamicDataCard.module.css";
+import handleAxiosError from "@/components/HandleAxiosError";
 
-// Always rendered the same way whether or not any category is actually
-// protected/hidden, so its presence never hints that secret content exists.
 const UnlockProtected = () => {
   const showAlertMessage = useSnackbar();
   const [showModal, setShowModal] = useState(false);

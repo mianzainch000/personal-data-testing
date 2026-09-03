@@ -1,6 +1,6 @@
 const UploadedFile = require("../models/uploadedFileSchema");
 
-const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3MB raw (~4MB after base64) — stays under Vercel's ~4.5MB request limit
+const MAX_FILE_SIZE = 3 * 1024 * 1024;
 
 exports.uploadFile = async (req, res) => {
   try {

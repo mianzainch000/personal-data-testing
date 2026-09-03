@@ -1,18 +1,18 @@
 "use client";
 import axios from "axios";
 import jsPDF from "jspdf";
+import Table from "@/components/Table";
 import autoTable from "jspdf-autotable";
 import { createPortal } from "react-dom";
-import { useEffect, useMemo, useRef, useState } from "react";
-import Table from "@/components/Table";
-import Pagination from "@/components/Pagination";
-import ConfirmModal from "@/components/ConfirmModal";
 import Button from "@/components/Button";
-import { useSnackbar } from "@/components/Snackbar";
-import handleAxiosError from "@/components/HandleAxiosError";
 import mr from "@/css/MeterRading.module.css";
+import Pagination from "@/components/Pagination";
 import tableStyles from "@/css/Table.module.css";
+import { useSnackbar } from "@/components/Snackbar";
+import ConfirmModal from "@/components/ConfirmModal";
 import styles from "@/css/DynamicDataCard.module.css";
+import { useEffect, useMemo, useRef, useState } from "react";
+import handleAxiosError from "@/components/HandleAxiosError";
 
 const emptyRowFormFrom = (fields) =>
   Object.fromEntries(fields.map((f) => [String(f._id), ""]));
@@ -28,14 +28,26 @@ const DynamicDataCard = ({ item }) => {
   const [search, setSearch] = useState("");
   const [filterFieldId, setFilterFieldId] = useState("");
   const [filterValue, setFilterValue] = useState("All");
-  const [rowsPerPage, setRowsPerPage] = useState("all");
-  const [customOptions, setCustomOptions] = useState([]);
+  const [rowsPerPage, setRowsPerPage] = useState(
+    item.config?.paginationRowsPerPage ?? "all",
+  );
+  const [customOptions, setCustomOptions] = useState(
+    item.config?.paginationCustomOptions || [],
+  );
   const [currentPage, setCurrentPage] = useState(1);
 
   const [showRowModal, setShowRowModal] = useState(false);
   const [rowForm, setRowForm] = useState({});
   const [editingRowId, setEditingRowId] = useState(null);
   const [fileUploading, setFileUploading] = useState({});
+  const [submittingRow, setSubmittingRow] = useState(false);
+  const [submittingTab, setSubmittingTab] = useState(false);
+  const [submittingCard, setSubmittingCard] = useState(false);
+
+  const [showCardModal, setShowCardModal] = useState(false);
+  const [cardTitleInput, setCardTitleInput] = useState("");
+  const [cardLinkInput, setCardLinkInput] = useState("");
+  const [editingCardId, setEditingCardId] = useState(null);
 
   const [showTabModal, setShowTabModal] = useState(false);
   const [tabNameInput, setTabNameInput] = useState("");
@@ -43,7 +55,7 @@ const DynamicDataCard = ({ item }) => {
   const [tabLinkInput, setTabLinkInput] = useState("");
   const [editingTabId, setEditingTabId] = useState(null);
 
-  const [deleteTarget, setDeleteTarget] = useState(null); // { type: 'row' | 'tab', id }
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const exportWrapRef = useRef(null);
@@ -51,7 +63,6 @@ const DynamicDataCard = ({ item }) => {
   const [pendingImportTabs, setPendingImportTabs] = useState(null);
   const [showImportConfirm, setShowImportConfirm] = useState(false);
 
-  // Re-sync local state whenever a different item is rendered.
   useEffect(() => {
     const list = item.tabs || [];
     setTabs(list);
@@ -130,7 +141,10 @@ const DynamicDataCard = ({ item }) => {
   const pageRows =
     effectiveRowsPerPage === "all"
       ? filteredRows
-      : filteredRows.slice(pageStartIndex, pageStartIndex + effectiveRowsPerPage);
+      : filteredRows.slice(
+          pageStartIndex,
+          pageStartIndex + effectiveRowsPerPage,
+        );
 
   const tableData = pageRows.map((r) => {
     const values = { ...(r.values || {}) };
@@ -164,7 +178,6 @@ const DynamicDataCard = ({ item }) => {
     (config.search && Boolean(search.trim())) ||
     (config.filter && Boolean(filterFieldId) && filterValue !== "All");
 
-  // ---------- Persistence ----------
   const persistTabs = async (nextTabs, successMessage) => {
     try {
       const res = await axios.put(`/categories/items/api/${item._id}`, {
@@ -184,7 +197,28 @@ const DynamicDataCard = ({ item }) => {
     }
   };
 
-  // ---------- Tabs ----------
+  const persistPaginationConfig = async (newRowsPerPage, newCustomOptions) => {
+    try {
+      await axios.put(`/categories/items/api/${item._id}`, {
+        config: {
+          ...config,
+          paginationRowsPerPage: newRowsPerPage,
+          paginationCustomOptions: newCustomOptions,
+        },
+      });
+    } catch {}
+  };
+
+  const handleRowsPerPageChange = (val) => {
+    setRowsPerPage(val);
+    persistPaginationConfig(val, customOptions);
+  };
+
+  const handleCustomOptionsChange = (opts) => {
+    setCustomOptions(opts);
+    persistPaginationConfig(rowsPerPage, opts);
+  };
+
   const openAddTab = () => {
     setTabNameInput("");
     setTabDetailInput("");
@@ -203,7 +237,8 @@ const DynamicDataCard = ({ item }) => {
 
   const submitTabModal = async (e) => {
     e.preventDefault();
-    if (!tabNameInput.trim()) return;
+    if (!tabNameInput.trim() || submittingTab) return;
+    setSubmittingTab(true);
 
     const tabPatch = {
       tabName: tabNameInput.trim(),
@@ -224,6 +259,7 @@ const DynamicDataCard = ({ item }) => {
       nextTabs,
       editingTabId ? "Tab updated!" : "Tab added!",
     );
+    setSubmittingTab(false);
     if (saved) {
       setShowTabModal(false);
       if (!editingTabId) {
@@ -241,7 +277,87 @@ const DynamicDataCard = ({ item }) => {
     setDeleteTarget(null);
   };
 
-  // ---------- Rows ----------
+  const openAddCard = () => {
+    setCardTitleInput("");
+    setCardLinkInput("");
+    setEditingCardId(null);
+    setShowCardModal(true);
+  };
+
+  const openEditCard = (card) => {
+    setCardTitleInput(card.title || "");
+    setCardLinkInput(card.link || "");
+    setEditingCardId(card._id);
+    setShowCardModal(true);
+  };
+
+  const submitCardModal = async (e) => {
+    e.preventDefault();
+    if (!cardTitleInput.trim() || submittingCard) return;
+    setSubmittingCard(true);
+
+    const workingTabs = tabs.length
+      ? tabs
+      : [{ tabName: "", order: 0, rows: [], cards: [] }];
+    const targetTabId = activeTab?._id;
+
+    const nextTabs = workingTabs.map((t, idx) => {
+      const isTarget = targetTabId ? t._id === targetTabId : idx === 0;
+      if (!isTarget) return t;
+      const cards = t.cards || [];
+      if (editingCardId) {
+        return {
+          ...t,
+          cards: cards.map((c) =>
+            c._id === editingCardId
+              ? {
+                  ...c,
+                  title: cardTitleInput.trim(),
+                  link: cardLinkInput.trim(),
+                }
+              : c,
+          ),
+        };
+      }
+      return {
+        ...t,
+        cards: [
+          ...cards,
+          {
+            title: cardTitleInput.trim(),
+            link: cardLinkInput.trim(),
+            order: cards.length,
+          },
+        ],
+      };
+    });
+
+    const saved = await persistTabs(
+      nextTabs,
+      editingCardId ? "Card updated!" : "Card added!",
+    );
+    setSubmittingCard(false);
+    if (saved) {
+      setShowCardModal(false);
+      setEditingCardId(null);
+      if (!activeTabId) setActiveTabId(saved[0]?._id);
+    }
+  };
+
+  const confirmDeleteCard = async () => {
+    const nextTabs = tabs.map((t) =>
+      t._id === activeTab._id
+        ? {
+            ...t,
+            cards: (t.cards || []).filter((c) => c._id !== deleteTarget.id),
+          }
+        : t,
+    );
+    await persistTabs(nextTabs, "Card deleted!");
+    setShowDeleteModal(false);
+    setDeleteTarget(null);
+  };
+
   const openAddRow = () => {
     setRowForm(emptyRowFormFrom(fields));
     setEditingRowId(null);
@@ -258,7 +374,7 @@ const DynamicDataCard = ({ item }) => {
     if (!file) return;
     if (file.size > 3 * 1024 * 1024) {
       showAlertMessage?.({
-        message: "File zyada bari hai (max 3MB).",
+        message: "File is too large (max 3MB).",
         type: "error",
       });
       return;
@@ -303,9 +419,12 @@ const DynamicDataCard = ({ item }) => {
 
   const submitRowModal = async (e) => {
     e.preventDefault();
+    if (submittingRow) return;
+    setSubmittingRow(true);
 
-    // If no tab exists yet (Tabs widget is off, or first row ever), create one implicitly.
-    const workingTabs = tabs.length ? tabs : [{ tabName: "", order: 0, rows: [] }];
+    const workingTabs = tabs.length
+      ? tabs
+      : [{ tabName: "", order: 0, rows: [] }];
     const targetTabId = activeTab?._id;
     const addToTop = (config.newRowPosition || "top") !== "bottom";
 
@@ -328,14 +447,15 @@ const DynamicDataCard = ({ item }) => {
       return { ...t, rows: newRows };
     });
 
-    const addMessage = addToTop
-      ? "Row sab se upar add ho gayi!"
-      : "Row sab se neeche add ho gayi!";
+    const defaultAddMessage = addToTop
+      ? "Row added to top!"
+      : "Row added to bottom!";
+    const successMessage = editingRowId
+      ? config.messages?.rowUpdated || "Row updated!"
+      : config.messages?.rowAdded || defaultAddMessage;
 
-    const saved = await persistTabs(
-      nextTabs,
-      editingRowId ? "Row updated!" : addMessage,
-    );
+    const saved = await persistTabs(nextTabs, successMessage);
+    setSubmittingRow(false);
     if (saved) {
       setShowRowModal(false);
       setEditingRowId(null);
@@ -346,10 +466,13 @@ const DynamicDataCard = ({ item }) => {
   const confirmDeleteRow = async () => {
     const nextTabs = tabs.map((t) =>
       t._id === activeTab._id
-        ? { ...t, rows: (t.rows || []).filter((r) => r._id !== deleteTarget.id) }
+        ? {
+            ...t,
+            rows: (t.rows || []).filter((r) => r._id !== deleteTarget.id),
+          }
         : t,
     );
-    await persistTabs(nextTabs, "Row deleted!");
+    await persistTabs(nextTabs, config.messages?.rowDeleted || "Row deleted!");
     setShowDeleteModal(false);
     setDeleteTarget(null);
   };
@@ -371,7 +494,6 @@ const DynamicDataCard = ({ item }) => {
     persistTabs(nextTabs, "Order updated!");
   };
 
-  // ---------- Export ----------
   const fileBaseName = () => {
     const parts = [item.title || "data", activeTab?.tabName].filter(Boolean);
     return parts.join("-").replace(/\s+/g, "_");
@@ -402,7 +524,6 @@ const DynamicDataCard = ({ item }) => {
     doc.save(`${fileBaseName()}.pdf`);
   };
 
-  // ---------- Export/Import backup (full-fidelity, re-importable) ----------
   const exportBackup = () => {
     const backup = {
       type: "personal-data-backup",
@@ -418,8 +539,7 @@ const DynamicDataCard = ({ item }) => {
         order: t.order ?? 0,
         rows: (t.rows || []).map((r) => ({
           order: r.order ?? 0,
-          // key by field label so it survives re-import even into a card
-          // whose field _ids differ (e.g. after re-creating the card)
+
           values: Object.fromEntries(
             fields.map((f) => [f.label, r.values?.[String(f._id)] ?? ""]),
           ),
@@ -439,7 +559,7 @@ const DynamicDataCard = ({ item }) => {
 
   const handleImportFile = (e) => {
     const file = e.target.files?.[0];
-    e.target.value = ""; // allow re-selecting the same file later
+    e.target.value = "";
     if (!file) return;
 
     const reader = new FileReader();
@@ -448,7 +568,6 @@ const DynamicDataCard = ({ item }) => {
         const parsed = JSON.parse(reader.result);
         const importedTabs = Array.isArray(parsed.tabs) ? parsed.tabs : [];
 
-        // Map imported values (keyed by field label) onto this card's current field ids.
         const labelToId = Object.fromEntries(
           fields.map((f) => [f.label.trim().toLowerCase(), String(f._id)]),
         );
@@ -468,7 +587,7 @@ const DynamicDataCard = ({ item }) => {
 
         if (!nextTabs.length) {
           showAlertMessage?.({
-            message: "Is file mein koi data nahi mila.",
+            message: "No data found in this file.",
             type: "error",
           });
           return;
@@ -478,7 +597,7 @@ const DynamicDataCard = ({ item }) => {
         setShowImportConfirm(true);
       } catch {
         showAlertMessage?.({
-          message: "Ye file valid backup JSON nahi hai.",
+          message: "This file is not a valid backup JSON.",
           type: "error",
         });
       }
@@ -495,28 +614,37 @@ const DynamicDataCard = ({ item }) => {
     setPendingImportTabs(null);
   };
 
-  if (!fields.length) {
+  if (config.table && !fields.length) {
     return (
       <p className={styles.emptyHint}>
-        Is card ke liye abhi tak koi field (column) nahi banaya. Manage
-        Categories mein ja kar table ke fields add karein.
+        This card doesn&apos;t have any fields (columns) yet. Go to Manage
+        Categories to add table fields.
       </p>
     );
   }
 
   return (
-    <div className={mr.container} style={{ maxWidth: "100%", textAlign: "left" }}>
+    <div
+      className={mr.container}
+      style={{ maxWidth: "100%", textAlign: "left" }}
+    >
       <ConfirmModal
         isOpen={showDeleteModal}
         title="Confirm Delete"
         message={
           deleteTarget?.type === "tab"
-            ? "Is tab ke sath uska sara data bhi delete ho jayega. Continue?"
-            : "Are you sure you want to delete this row?"
+            ? "Deleting this tab will also delete all of its data. Continue?"
+            : deleteTarget?.type === "card"
+              ? "Are you sure you want to delete this card?"
+              : "Are you sure you want to delete this row?"
         }
         confirmText="Yes, Delete"
         onConfirm={
-          deleteTarget?.type === "tab" ? confirmDeleteTab : confirmDeleteRow
+          deleteTarget?.type === "tab"
+            ? confirmDeleteTab
+            : deleteTarget?.type === "card"
+              ? confirmDeleteCard
+              : confirmDeleteRow
         }
         onCancel={() => {
           setShowDeleteModal(false);
@@ -527,7 +655,7 @@ const DynamicDataCard = ({ item }) => {
       <ConfirmModal
         isOpen={showImportConfirm}
         title="Import Restore"
-        message="Ye file ka data current tabs ke saath merge karke overwrite kar dega (same naam wale fields match ho jayenge). Continue?"
+        message="This file's data will be merged with the current tabs, overwriting fields with matching names. Continue?"
         confirmText="Yes, Import"
         onConfirm={confirmImport}
         onCancel={() => {
@@ -581,9 +709,8 @@ const DynamicDataCard = ({ item }) => {
 
       {config.tabs && tabs.length === 0 && (
         <p className={styles.emptyHint}>
-          Abhi tak koi tab nahi hai. Data add karne ke liye upar{" "}
-          <strong>+ Add Tab</strong> par click karein (jaise &quot;Meter
-          1&quot;).
+          No tabs yet. Click <strong>+ Add Tab</strong> above to add data (e.g.
+          &quot;Meter 1&quot;).
         </p>
       )}
 
@@ -597,178 +724,231 @@ const DynamicDataCard = ({ item }) => {
                 </p>
               )}
               {activeTab.link && (
-                <a
-                  href={activeTab.link}
-                  className={styles.tabLink}
-                >
+                <a href={activeTab.link} className={styles.tabLink}>
                   🔗 {activeTab.link}
                 </a>
               )}
             </div>
           )}
 
-          <div className={mr.buttonGroup}>
-            {(config.pdf || config.exportJson) && (
-              <div
-                className={tableStyles.splitButtonContainer}
-                ref={exportWrapRef}
-              >
-                <Button
-                  variant="ghost"
-                  onClick={() => setShowExportMenu((s) => !s)}
-                >
-                  ⬇ Options ▾
-                </Button>
-                {showExportMenu && (
-                  <div className={tableStyles.dropdownMenu}>
-                    {config.pdf && (
-                      <div
-                        className={tableStyles.dropdownItem}
-                        onClick={() => {
-                          exportPdf();
-                          setShowExportMenu(false);
-                        }}
-                      >
-                        📄 PDF Report
+          {config.table && (
+            <>
+              <div className={mr.buttonGroup}>
+                {(config.pdf || config.exportJson) && (
+                  <div
+                    className={tableStyles.splitButtonContainer}
+                    ref={exportWrapRef}
+                  >
+                    <Button
+                      variant="ghost"
+                      onClick={() => setShowExportMenu((s) => !s)}
+                    >
+                      ⬇ Options ▾
+                    </Button>
+                    {showExportMenu && (
+                      <div className={tableStyles.dropdownMenu}>
+                        {config.pdf && (
+                          <div
+                            className={tableStyles.dropdownItem}
+                            onClick={() => {
+                              exportPdf();
+                              setShowExportMenu(false);
+                            }}
+                          >
+                            📄 PDF Report
+                          </div>
+                        )}
+                        {config.exportJson && (
+                          <div
+                            className={tableStyles.dropdownItem}
+                            onClick={() => {
+                              exportBackup();
+                              setShowExportMenu(false);
+                            }}
+                          >
+                            🧳 Export Backup
+                          </div>
+                        )}
+                        {config.exportJson && (
+                          <div
+                            className={tableStyles.dropdownItem}
+                            onClick={() => {
+                              setShowExportMenu(false);
+                              importFileRef.current?.click();
+                            }}
+                          >
+                            📥 Import Backup
+                          </div>
+                        )}
                       </div>
                     )}
-                    {config.exportJson && (
-                      <div
-                        className={tableStyles.dropdownItem}
-                        onClick={() => {
-                          exportBackup();
-                          setShowExportMenu(false);
-                        }}
-                      >
-                        🧳 Export Backup
-                      </div>
-                    )}
-                    {config.exportJson && (
-                      <div
-                        className={tableStyles.dropdownItem}
-                        onClick={() => {
-                          setShowExportMenu(false);
-                          importFileRef.current?.click();
-                        }}
-                      >
-                        📥 Import Backup
-                      </div>
-                    )}
+                    <input
+                      ref={importFileRef}
+                      type="file"
+                      accept=".json,application/json"
+                      style={{ display: "none" }}
+                      onChange={handleImportFile}
+                    />
                   </div>
                 )}
-                <input
-                  ref={importFileRef}
-                  type="file"
-                  accept=".json,application/json"
-                  style={{ display: "none" }}
-                  onChange={handleImportFile}
-                />
+
+                <Button variant="primary" onClick={openAddRow}>
+                  + Add Row
+                </Button>
               </div>
-            )}
 
-            <Button variant="primary" onClick={openAddRow}>
-              + Add Row
-            </Button>
-          </div>
+              {(config.search || config.filter) && (
+                <div className={mr.filters}>
+                  {config.search && (
+                    <input
+                      type="text"
+                      className={mr.filterInput}
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search..."
+                    />
+                  )}
 
-          {(config.search || config.filter) && (
-            <div className={mr.filters}>
-              {config.search && (
-                <input
-                  type="text"
-                  className={mr.filterInput}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search..."
+                  {config.filter && (
+                    <>
+                      <select
+                        value={filterFieldId}
+                        onChange={(e) => {
+                          setFilterFieldId(e.target.value);
+                          setFilterValue("All");
+                        }}
+                        className={mr.filterSelect}
+                      >
+                        <option value="">Filter by…</option>
+                        {fields.map((f) => (
+                          <option key={f._id} value={String(f._id)}>
+                            {f.label}
+                          </option>
+                        ))}
+                      </select>
+                      {filterFieldId && (
+                        <select
+                          value={filterValue}
+                          onChange={(e) => setFilterValue(e.target.value)}
+                          className={mr.filterSelect}
+                        >
+                          <option value="All">All</option>
+                          {filterOptions.map((v) => (
+                            <option key={v} value={v}>
+                              {v}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+              <Table
+                columns={columns}
+                data={tableData}
+                onReorder={config.dragDrop ? handleReorder : undefined}
+                dragEnabled={Boolean(config.dragDrop)}
+                isSearchActive={isSearchOrFilterActive}
+                emptyMessage="No data yet. Click + Add Row to get started."
+                renderActions={(row) => (
+                  <>
+                    <span
+                      onClick={() =>
+                        openEditRow(pageRows.find((r) => r._id === row._id))
+                      }
+                      title="Edit"
+                    >
+                      ✏️
+                    </span>
+                    <span
+                      onClick={() => {
+                        setDeleteTarget({ type: "row", id: row._id });
+                        setShowDeleteModal(true);
+                      }}
+                      title="Delete"
+                    >
+                      🗑️
+                    </span>
+                  </>
+                )}
+              />
+
+              {config.pagination && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  rowsPerPage={rowsPerPage}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  customOptions={customOptions}
+                  onCustomOptionsChange={handleCustomOptionsChange}
+                  totalItems={filteredRows.length}
                 />
               )}
-
-              {config.filter && (
-                <>
-                  <select
-                    value={filterFieldId}
-                    onChange={(e) => {
-                      setFilterFieldId(e.target.value);
-                      setFilterValue("All");
-                    }}
-                    className={mr.filterSelect}
-                  >
-                    <option value="">Filter by…</option>
-                    {fields.map((f) => (
-                      <option key={f._id} value={String(f._id)}>
-                        {f.label}
-                      </option>
-                    ))}
-                  </select>
-                  {filterFieldId && (
-                    <select
-                      value={filterValue}
-                      onChange={(e) => setFilterValue(e.target.value)}
-                      className={mr.filterSelect}
-                    >
-                      <option value="All">All</option>
-                      {filterOptions.map((v) => (
-                        <option key={v} value={v}>
-                          {v}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </>
-              )}
-            </div>
+            </>
           )}
 
-          <Table
-            columns={columns}
-            data={tableData}
-            onReorder={config.dragDrop ? handleReorder : undefined}
-            dragEnabled={Boolean(config.dragDrop)}
-            isSearchActive={isSearchOrFilterActive}
-            emptyMessage="Koi data nahi hai. + Add Row se shuru karein."
-            renderActions={(row) => (
-              <>
-                <span
-                  onClick={() =>
-                    openEditRow(pageRows.find((r) => r._id === row._id))
-                  }
-                  title="Edit"
-                >
-                  ✏️
-                </span>
-                <span
-                  onClick={() => {
-                    setDeleteTarget({ type: "row", id: row._id });
-                    setShowDeleteModal(true);
-                  }}
-                  title="Delete"
-                >
-                  🗑️
-                </span>
-              </>
-            )}
-          />
+          {!config.table && (
+            <div className={styles.cardsListWrap}>
+              <Button variant="primary" onClick={openAddCard}>
+                + Add Card
+              </Button>
 
-          {config.pagination && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={setRowsPerPage}
-              customOptions={customOptions}
-              onCustomOptionsChange={setCustomOptions}
-              totalItems={filteredRows.length}
-            />
+              {!(activeTab?.cards || []).length ? (
+                <p className={styles.emptyHint}>
+                  No cards yet. Click + Add Card to add a title + link.
+                </p>
+              ) : (
+                <div className={styles.simpleCardsList}>
+                  {activeTab.cards.map((card) => (
+                    <div key={card._id} className={styles.simpleCardRow}>
+                      {card.link ? (
+                        <a
+                          href={card.link}
+                          className={styles.tabLink}
+                          style={{ margin: 0 }}
+                        >
+                          {card.title || card.link}
+                        </a>
+                      ) : (
+                        <span>{card.title}</span>
+                      )}
+                      <span
+                        className={styles.tabIcon}
+                        onClick={() => openEditCard(card)}
+                        title="Edit"
+                      >
+                        ✏️
+                      </span>
+                      <span
+                        className={styles.tabIcon}
+                        onClick={() => {
+                          setDeleteTarget({ type: "card", id: card._id });
+                          setShowDeleteModal(true);
+                        }}
+                        title="Delete"
+                      >
+                        🗑️
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </>
       ) : null}
 
-      {/* Add / Edit Row modal */}
+      {}
       {showRowModal &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className={styles.modalOverlay} onClick={() => setShowRowModal(false)}>
+          <div
+            className={styles.modalOverlay}
+            onClick={() => setShowRowModal(false)}
+          >
             <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
@@ -803,7 +983,7 @@ const DynamicDataCard = ({ item }) => {
                         />
                         {fileUploading[String(f._id)] && (
                           <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>
-                            Upload ho raha hai...
+                            Uploading...
                           </span>
                         )}
                         {!fileUploading[String(f._id)] &&
@@ -843,8 +1023,12 @@ const DynamicDataCard = ({ item }) => {
                     )}
                   </div>
                 ))}
-                <button type="submit" className={styles.modalSubmit}>
-                  Submit
+                <button
+                  type="submit"
+                  className={styles.modalSubmit}
+                  disabled={submittingRow}
+                >
+                  {submittingRow ? "Submitting..." : "Submit"}
                 </button>
               </form>
             </div>
@@ -852,11 +1036,14 @@ const DynamicDataCard = ({ item }) => {
           document.body,
         )}
 
-      {/* Add / Rename Tab modal */}
+      {}
       {showTabModal &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className={styles.modalOverlay} onClick={() => setShowTabModal(false)}>
+          <div
+            className={styles.modalOverlay}
+            onClick={() => setShowTabModal(false)}
+          >
             <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
@@ -880,7 +1067,7 @@ const DynamicDataCard = ({ item }) => {
                   />
                 </div>
                 <div className={styles.modalField}>
-                  <label>Detail (optional — is tab ke liye alag note)</label>
+                  <label>Detail (optional — a note specific to this tab)</label>
                   <textarea
                     rows={3}
                     value={tabDetailInput}
@@ -897,8 +1084,64 @@ const DynamicDataCard = ({ item }) => {
                     placeholder="https://..."
                   />
                 </div>
-                <button type="submit" className={styles.modalSubmit}>
-                  Submit
+                <button
+                  type="submit"
+                  className={styles.modalSubmit}
+                  disabled={submittingTab}
+                >
+                  {submittingTab ? "Submitting..." : "Submit"}
+                </button>
+              </form>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {}
+      {showCardModal &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className={styles.modalOverlay}
+            onClick={() => setShowCardModal(false)}
+          >
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={() => setShowCardModal(false)}
+              >
+                ✕
+              </button>
+              <h3 className={styles.modalTitle}>
+                {editingCardId ? "Edit Card" : "Add Card"}
+              </h3>
+              <form onSubmit={submitCardModal} className={styles.modalForm}>
+                <div className={styles.modalField}>
+                  <label>Title</label>
+                  <input
+                    type="text"
+                    autoFocus
+                    value={cardTitleInput}
+                    onChange={(e) => setCardTitleInput(e.target.value)}
+                    placeholder="e.g. Search Hadith"
+                  />
+                </div>
+                <div className={styles.modalField}>
+                  <label>Link (optional)</label>
+                  <input
+                    type="text"
+                    value={cardLinkInput}
+                    onChange={(e) => setCardLinkInput(e.target.value)}
+                    placeholder="https://..."
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className={styles.modalSubmit}
+                  disabled={submittingCard}
+                >
+                  {submittingCard ? "Submitting..." : "Submit"}
                 </button>
               </form>
             </div>

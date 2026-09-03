@@ -6,10 +6,7 @@ export async function PUT(req, { params }) {
     const { id } = await params;
     const body = await req.json();
 
-    const res = await axiosClient.put(
-      `${apiConfig.item.update}/${id}`,
-      body,
-    );
+    const res = await axiosClient.put(`${apiConfig.item.update}/${id}`, body);
     return new Response(JSON.stringify(res.data), { status: res.status });
   } catch (error) {
     return new Response(JSON.stringify({ message: "Failed", error }), {
