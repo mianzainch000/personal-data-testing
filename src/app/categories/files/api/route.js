@@ -1,6 +1,8 @@
 import { apiConfig } from "@/config/apiConfig";
 import axiosClient from "@/config/axiosClient";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req) {
   try {
     const body = await req.json();

@@ -8,6 +8,7 @@ const itemFieldSchema = new Schema({
     enum: ["text", "number", "date", "email", "encrypt", "file"],
     default: "text",
   },
+  placeholder: { type: String, trim: true, default: "" },
 });
 
 const itemRowSchema = new Schema({

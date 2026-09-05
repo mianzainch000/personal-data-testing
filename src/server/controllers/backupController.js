@@ -5,6 +5,7 @@ const Item = require("../models/itemSchema");
 const UploadedFile = require("../models/uploadedFileSchema");
 const { encrypt, decryptTabsValues } = require("../helper/itemCrypto");
 const { isCategoryAccessible } = require("../helper/categoryAccess");
+const { extractFileIdsFromMany } = require("../helper/itemFiles");
 
 const MAX_EMBEDDED_FILE_SIZE = 3 * 1024 * 1024;
 
@@ -238,24 +239,24 @@ exports.importBackup = async (req, res) => {
         .json({ success: false, message: "Invalid backup file" });
     }
 
+    const existingItems = await Item.find({ userId });
+    const fileIdsToDelete = extractFileIdsFromMany(existingItems);
+    if (fileIdsToDelete.length) {
+      await UploadedFile.deleteMany({
+        _id: { $in: fileIdsToDelete },
+        userId,
+      });
+    }
+    await Item.deleteMany({ userId });
+    await Subcategory.deleteMany({ userId });
+    await Category.deleteMany({ userId });
+
     let categoriesCreated = 0;
-    let categoriesReplaced = 0;
     let subcategoriesCreated = 0;
     let itemsCreated = 0;
 
     for (const catData of backup.categories) {
       if (!catData?.categoryName) continue;
-
-      const existing = await Category.findOne({
-        userId,
-        categoryName: catData.categoryName,
-      });
-      if (existing) {
-        await Item.deleteMany({ userId, categoryId: existing._id });
-        await Subcategory.deleteMany({ userId, categoryId: existing._id });
-        await Category.deleteOne({ _id: existing._id });
-        categoriesReplaced++;
-      }
 
       const newCategory = await Category.create({
         categoryName: catData.categoryName,
@@ -307,9 +308,8 @@ exports.importBackup = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `Import complete: ${categoriesCreated} categories (${categoriesReplaced} replaced duplicates), ${subcategoriesCreated} subcategories, ${itemsCreated} detail cards.`,
+      message: `Import complete: your existing data was replaced with ${categoriesCreated} categories, ${subcategoriesCreated} subcategories, and ${itemsCreated} detail cards from the backup.`,
       categoriesCreated,
-      categoriesReplaced,
       subcategoriesCreated,
       itemsCreated,
     });

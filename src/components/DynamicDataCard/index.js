@@ -909,6 +909,7 @@ const DynamicDataCard = ({ item }) => {
                                   ? "email"
                                   : "text"
                           }
+                          placeholder={f.placeholder || ""}
                           value={rowForm[String(f._id)] ?? ""}
                           onChange={(e) =>
                             setRowForm({

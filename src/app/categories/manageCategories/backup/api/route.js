@@ -1,6 +1,8 @@
 import { apiConfig } from "@/config/apiConfig";
 import axiosClient from "@/config/axiosClient";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const res = await axiosClient.get(apiConfig.backup.export);
   return new Response(JSON.stringify(res?.data), { status: res?.status });

@@ -87,6 +87,7 @@ const CategoryClientWrapper = () => {
   const [editingItemId, setEditingItemId] = useState(null);
   const [newFieldLabel, setNewFieldLabel] = useState("");
   const [newFieldType, setNewFieldType] = useState("text");
+  const [newFieldPlaceholder, setNewFieldPlaceholder] = useState("");
   const [editingFieldIndex, setEditingFieldIndex] = useState(null);
   const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false);
 
@@ -358,6 +359,7 @@ const CategoryClientWrapper = () => {
         _id: f._id,
         label: f.label,
         type: f.type || "text",
+        placeholder: f.placeholder || "",
       })),
     });
     setEditingItemId(item._id);
@@ -572,7 +574,7 @@ const CategoryClientWrapper = () => {
         confirmText="Yes, Import"
         message={`This file contains ${
           pendingImportBackup?.categories?.length || 0
-        } category(ies). Any category with a matching name will be REPLACED (the old one deleted, the new one created). All other categories will be left untouched. Continue?`}
+        } category(ies). This will completely REPLACE all of your current categories, subcategories, and detail cards with what's in this file — anything not in the file will be deleted. This cannot be undone. Continue?`}
         onConfirm={confirmImportFullBackup}
         onCancel={() => {
           setShowImportConfirm(false);
@@ -1154,6 +1156,9 @@ const CategoryClientWrapper = () => {
                                           setEditingFieldIndex(idx);
                                           setNewFieldLabel(f.label);
                                           setNewFieldType(f.type || "text");
+                                          setNewFieldPlaceholder(
+                                            f.placeholder || "",
+                                          );
                                         }}
                                       >
                                         ✏️
@@ -1162,16 +1167,17 @@ const CategoryClientWrapper = () => {
                                         type="button"
                                         title="Delete"
                                         onClick={() => {
-                                          setItemForm({
-                                            ...itemForm,
-                                            fields: itemForm.fields.filter(
+                                          setItemForm((prev) => ({
+                                            ...prev,
+                                            fields: prev.fields.filter(
                                               (_, i) => i !== idx,
                                             ),
-                                          });
+                                          }));
                                           if (editingFieldIndex === idx) {
                                             setEditingFieldIndex(null);
                                             setNewFieldLabel("");
                                             setNewFieldType("text");
+                                            setNewFieldPlaceholder("");
                                           }
                                         }}
                                       >
@@ -1207,39 +1213,52 @@ const CategoryClientWrapper = () => {
                                   </option>
                                   <option value="file">📎 File Upload</option>
                                 </select>
+                                <input
+                                  type="text"
+                                  placeholder="Placeholder text (optional, e.g. john@example.com)"
+                                  value={newFieldPlaceholder}
+                                  onChange={(e) =>
+                                    setNewFieldPlaceholder(e.target.value)
+                                  }
+                                />
                                 <button
                                   type="button"
                                   className={styles.ghostBtn}
                                   onClick={() => {
                                     if (!newFieldLabel.trim()) return;
-                                    if (editingFieldIndex !== null) {
-                                      setItemForm({
-                                        ...itemForm,
-                                        fields: itemForm.fields.map((f, i) =>
-                                          i === editingFieldIndex
-                                            ? {
-                                                ...f,
-                                                label: newFieldLabel.trim(),
-                                                type: newFieldType,
-                                              }
-                                            : f,
-                                        ),
-                                      });
-                                      setEditingFieldIndex(null);
-                                    } else {
-                                      setItemForm({
-                                        ...itemForm,
+                                    const label = newFieldLabel.trim();
+                                    const type = newFieldType;
+                                    const placeholder =
+                                      newFieldPlaceholder.trim();
+
+                                    setItemForm((prev) => {
+                                      if (editingFieldIndex !== null) {
+                                        return {
+                                          ...prev,
+                                          fields: prev.fields.map((f, i) =>
+                                            i === editingFieldIndex
+                                              ? {
+                                                  ...f,
+                                                  label,
+                                                  type,
+                                                  placeholder,
+                                                }
+                                              : f,
+                                          ),
+                                        };
+                                      }
+                                      return {
+                                        ...prev,
                                         fields: [
-                                          ...itemForm.fields,
-                                          {
-                                            label: newFieldLabel.trim(),
-                                            type: newFieldType,
-                                          },
+                                          ...prev.fields,
+                                          { label, type, placeholder },
                                         ],
-                                      });
-                                    }
+                                      };
+                                    });
+                                    setEditingFieldIndex(null);
                                     setNewFieldLabel("");
                                     setNewFieldType("text");
+                                    setNewFieldPlaceholder("");
                                   }}
                                 >
                                   {editingFieldIndex !== null
@@ -1254,6 +1273,7 @@ const CategoryClientWrapper = () => {
                                       setEditingFieldIndex(null);
                                       setNewFieldLabel("");
                                       setNewFieldType("text");
+                                      setNewFieldPlaceholder("");
                                     }}
                                   >
                                     Cancel

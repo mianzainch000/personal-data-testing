@@ -1,6 +1,8 @@
 import { apiConfig } from "@/config/apiConfig";
 import axiosClient from "@/config/axiosClient";
 
+export const dynamic = "force-dynamic";
+
 export const postData = async (params) => {
   return await axiosClient.post(apiConfig.forgotPassword, params);
 };
