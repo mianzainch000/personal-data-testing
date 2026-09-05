@@ -76,9 +76,6 @@ const itemSchema = new mongoose.Schema(
       paginationRowsPerPage: { type: Schema.Types.Mixed, default: "all" },
       paginationCustomOptions: { type: [Number], default: [] },
 
-      // Lets a user rename the "+ Add Tab" button per item (e.g. "+ Add
-      // Meter" instead of the generic default) — same pattern as the
-      // custom row messages below.
       addTabButtonLabel: { type: String, trim: true, default: "" },
 
       messages: {

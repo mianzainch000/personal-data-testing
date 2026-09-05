@@ -13,27 +13,11 @@
 .tabs {
   gap: 10px;
   display: flex;
-  /* No wrapping — tabs stay on a single row. With only a couple of
-     tabs they stretch to fill the row (see .tab below); once there
-     are too many to fit even at their smallest, the row scrolls
-     horizontally instead of reflowing onto new rows. Wrapping was
-     what caused the earlier "wobble" — each row's tabs would resize
-     differently depending on how many happened to land in that row,
-     so removing wrap removes that instability entirely. */
   overflow-x: auto;
   margin-bottom: 20px;
 }
 
 .tab {
-  /* Pure equal division of the row: 1 tab = 100% width, 2 tabs = 50%
-     each, 3 tabs = 33% each, and so on — flex: 1 1 0 with no
-     max-width cap lets every tab grow to fill its equal share
-     regardless of count. min-width is only a shrink floor for when
-     there are enough tabs that equal shares would get unreadably
-     small — past that point the row scrolls horizontally instead of
-     squeezing tabs further, rather than wrapping to new rows (which
-     is what caused the original wobble, since each row would then
-     divide the width differently). */
   flex: 1 1 0;
   min-width: 90px;
   cursor: pointer;
@@ -41,9 +25,9 @@
   padding: 10px 20px;
   border-radius: 8px;
   border: 1px solid #ddd;
-  transition: background 0.3s ease;
   color: var(--text-primary);
   background: var(--color-ghost);
+  transition: background 0.3s ease;
 }
 
 .tab.active {

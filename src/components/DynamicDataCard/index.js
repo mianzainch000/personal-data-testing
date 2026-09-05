@@ -9,11 +9,11 @@ import mr from "@/css/MeterRading.module.css";
 import Pagination from "@/components/Pagination";
 import tableStyles from "@/css/Table.module.css";
 import { useSnackbar } from "@/components/Snackbar";
+import { getCookie, setCookie } from "cookies-next";
 import ConfirmModal from "@/components/ConfirmModal";
 import styles from "@/css/DynamicDataCard.module.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import handleAxiosError from "@/components/HandleAxiosError";
-import { getCookie, setCookie } from "cookies-next";
 
 const emptyRowFormFrom = (fields) =>
   Object.fromEntries(fields.map((f) => [String(f._id), ""]));
@@ -65,14 +65,8 @@ const DynamicDataCard = ({ item }) => {
     const savedTabId = getCookie(`activeTab_${item._id}`);
     const isSavedValid = savedTabId && list.some((t) => t._id === savedTabId);
     setActiveTabId(isSavedValid ? savedTabId : list[0]?._id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item._id]);
 
-  // Select a tab and persist the choice (per card) in a cookie so it
-  // survives a refresh. Writing the cookie right here — instead of in a
-  // separate effect that reacts to activeTabId — avoids a race where an
-  // effect fires with a stale value and overwrites the cookie we just read
-  // on mount.
   const selectTab = (tabId) => {
     setActiveTabId(tabId);
     if (item._id && tabId)
@@ -154,9 +148,9 @@ const DynamicDataCard = ({ item }) => {
     effectiveRowsPerPage === "all"
       ? filteredRows
       : filteredRows.slice(
-        pageStartIndex,
-        pageStartIndex + effectiveRowsPerPage,
-      );
+          pageStartIndex,
+          pageStartIndex + effectiveRowsPerPage,
+        );
 
   const tableData = pageRows.map((r) => {
     const values = { ...(r.values || {}) };
@@ -218,7 +212,7 @@ const DynamicDataCard = ({ item }) => {
           paginationCustomOptions: newCustomOptions,
         },
       });
-    } catch { }
+    } catch {}
   };
 
   const handleRowsPerPageChange = (val) => {
@@ -242,9 +236,7 @@ const DynamicDataCard = ({ item }) => {
 
   const openRenameTab = (tab) => {
     setTabNameInput(tab.tabName || "");
-    setTabDetailInputs(
-      tab.detail ? tab.detail.split("\n") : [""],
-    );
+    setTabDetailInputs(tab.detail ? tab.detail.split("\n") : [""]);
     setTabLinkTitleInput(tab.linkTitle || "");
     setTabLinkUrlInput(tab.link || "");
     setEditingTabId(tab._id);
@@ -406,9 +398,9 @@ const DynamicDataCard = ({ item }) => {
     const nextTabs = tabs.map((t) =>
       t._id === activeTab._id
         ? {
-          ...t,
-          rows: (t.rows || []).filter((r) => r._id !== deleteTarget.id),
-        }
+            ...t,
+            rows: (t.rows || []).filter((r) => r._id !== deleteTarget.id),
+          }
         : t,
     );
     await persistTabs(nextTabs, config.messages?.rowDeleted || "Row deleted!");
@@ -553,9 +545,6 @@ const DynamicDataCard = ({ item }) => {
     setPendingImportTabs(null);
   };
 
-  // Table now always renders for tab content (the old "simple cards
-  // list" fallback for config.table === false was removed), so this
-  // guard must apply regardless of the config.table flag.
   if (!fields.length) {
     return (
       <p className={styles.emptyHint}>
@@ -676,10 +665,7 @@ const DynamicDataCard = ({ item }) => {
                   </a>
                 ) : (
                   activeTab.linkTitle && (
-                    <p
-                      style={{ margin: 0 }}
-                      className={styles.tabDetailText}
-                    >
+                    <p style={{ margin: 0 }} className={styles.tabDetailText}>
                       {activeTab.linkTitle}
                     </p>
                   )
@@ -687,11 +673,7 @@ const DynamicDataCard = ({ item }) => {
               </div>
             )}
 
-          {/* Table is always shown for tab content now — the old
-              config.table toggle used to switch between this table and a
-              simple "title + link" cards list, but that fallback view has
-              been removed so every tab consistently uses the same,
-              responsive table. */}
+          {}
           <>
             <div className={mr.buttonGroup}>
               {(config.pdf || config.exportJson) && (
@@ -702,156 +684,156 @@ const DynamicDataCard = ({ item }) => {
                   <Button
                     variant="ghost"
                     onClick={() => setShowExportMenu((s) => !s)}
-                    >
-                      ⬇ Options ▾
-                    </Button>
-                    {showExportMenu && (
-                      <div className={tableStyles.dropdownMenu}>
-                        {config.pdf && (
-                          <div
-                            className={tableStyles.dropdownItem}
-                            onClick={() => {
-                              exportPdf();
-                              setShowExportMenu(false);
-                            }}
-                          >
-                            📄 PDF Report
-                          </div>
-                        )}
-                        {config.exportJson && (
-                          <div
-                            className={tableStyles.dropdownItem}
-                            onClick={() => {
-                              exportBackup();
-                              setShowExportMenu(false);
-                            }}
-                          >
-                            🧳 Export Backup
-                          </div>
-                        )}
-                        {config.exportJson && (
-                          <div
-                            className={tableStyles.dropdownItem}
-                            onClick={() => {
-                              setShowExportMenu(false);
-                              importFileRef.current?.click();
-                            }}
-                          >
-                            📥 Import Backup
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <input
-                      ref={importFileRef}
-                      type="file"
-                      accept=".json,application/json"
-                      style={{ display: "none" }}
-                      onChange={handleImportFile}
-                    />
-                  </div>
-                )}
-
-                <Button variant="primary" onClick={openAddRow}>
-                  + Add Row
-                </Button>
-              </div>
-
-              {(config.search || config.filter) && (
-                <div className={mr.filters}>
-                  {config.search && (
-                    <input
-                      type="text"
-                      className={mr.filterInput}
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search..."
-                    />
-                  )}
-
-                  {config.filter && (
-                    <>
-                      <select
-                        value={filterFieldId}
-                        onChange={(e) => {
-                          setFilterFieldId(e.target.value);
-                          setFilterValue("All");
-                        }}
-                        className={mr.filterSelect}
-                      >
-                        <option value="">Filter by…</option>
-                        {fields.map((f) => (
-                          <option key={f._id} value={String(f._id)}>
-                            {f.label}
-                          </option>
-                        ))}
-                      </select>
-                      {filterFieldId && (
-                        <select
-                          value={filterValue}
-                          onChange={(e) => setFilterValue(e.target.value)}
-                          className={mr.filterSelect}
+                  >
+                    ⬇ Options ▾
+                  </Button>
+                  {showExportMenu && (
+                    <div className={tableStyles.dropdownMenu}>
+                      {config.pdf && (
+                        <div
+                          className={tableStyles.dropdownItem}
+                          onClick={() => {
+                            exportPdf();
+                            setShowExportMenu(false);
+                          }}
                         >
-                          <option value="All">All</option>
-                          {filterOptions.map((v) => (
-                            <option key={v} value={v}>
-                              {v}
-                            </option>
-                          ))}
-                        </select>
+                          📄 PDF Report
+                        </div>
                       )}
-                    </>
+                      {config.exportJson && (
+                        <div
+                          className={tableStyles.dropdownItem}
+                          onClick={() => {
+                            exportBackup();
+                            setShowExportMenu(false);
+                          }}
+                        >
+                          🧳 Export Backup
+                        </div>
+                      )}
+                      {config.exportJson && (
+                        <div
+                          className={tableStyles.dropdownItem}
+                          onClick={() => {
+                            setShowExportMenu(false);
+                            importFileRef.current?.click();
+                          }}
+                        >
+                          📥 Import Backup
+                        </div>
+                      )}
+                    </div>
                   )}
+                  <input
+                    ref={importFileRef}
+                    type="file"
+                    accept=".json,application/json"
+                    style={{ display: "none" }}
+                    onChange={handleImportFile}
+                  />
                 </div>
               )}
 
-              <Table
-                columns={columns}
-                data={tableData}
-                onReorder={config.dragDrop ? handleReorder : undefined}
-                dragEnabled={Boolean(config.dragDrop)}
-                isSearchActive={isSearchOrFilterActive}
-                emptyMessage="No data yet. Click + Add Row to get started."
-                renderActions={(row) => (
+              <Button variant="primary" onClick={openAddRow}>
+                + Add Row
+              </Button>
+            </div>
+
+            {(config.search || config.filter) && (
+              <div className={mr.filters}>
+                {config.search && (
+                  <input
+                    type="text"
+                    className={mr.filterInput}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search..."
+                  />
+                )}
+
+                {config.filter && (
                   <>
-                    <span
-                      onClick={() =>
-                        openEditRow(pageRows.find((r) => r._id === row._id))
-                      }
-                      title="Edit"
-                    >
-                      ✏️
-                    </span>
-                    <span
-                      onClick={() => {
-                        setDeleteTarget({ type: "row", id: row._id });
-                        setShowDeleteModal(true);
+                    <select
+                      value={filterFieldId}
+                      onChange={(e) => {
+                        setFilterFieldId(e.target.value);
+                        setFilterValue("All");
                       }}
-                      title="Delete"
+                      className={mr.filterSelect}
                     >
-                      🗑️
-                    </span>
+                      <option value="">Filter by…</option>
+                      {fields.map((f) => (
+                        <option key={f._id} value={String(f._id)}>
+                          {f.label}
+                        </option>
+                      ))}
+                    </select>
+                    {filterFieldId && (
+                      <select
+                        value={filterValue}
+                        onChange={(e) => setFilterValue(e.target.value)}
+                        className={mr.filterSelect}
+                      >
+                        <option value="All">All</option>
+                        {filterOptions.map((v) => (
+                          <option key={v} value={v}>
+                            {v}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </>
                 )}
-              />
+              </div>
+            )}
 
-              {config.pagination && (
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  rowsPerPage={rowsPerPage}
-                  onRowsPerPageChange={handleRowsPerPageChange}
-                  customOptions={customOptions}
-                  onCustomOptionsChange={handleCustomOptionsChange}
-                  totalItems={filteredRows.length}
-                />
+            <Table
+              columns={columns}
+              data={tableData}
+              onReorder={config.dragDrop ? handleReorder : undefined}
+              dragEnabled={Boolean(config.dragDrop)}
+              isSearchActive={isSearchOrFilterActive}
+              emptyMessage="No data yet. Click + Add Row to get started."
+              renderActions={(row) => (
+                <>
+                  <span
+                    onClick={() =>
+                      openEditRow(pageRows.find((r) => r._id === row._id))
+                    }
+                    title="Edit"
+                  >
+                    ✏️
+                  </span>
+                  <span
+                    onClick={() => {
+                      setDeleteTarget({ type: "row", id: row._id });
+                      setShowDeleteModal(true);
+                    }}
+                    title="Delete"
+                  >
+                    🗑️
+                  </span>
+                </>
               )}
-            </>
+            />
+
+            {config.pagination && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={handleRowsPerPageChange}
+                customOptions={customOptions}
+                onCustomOptionsChange={handleCustomOptionsChange}
+                totalItems={filteredRows.length}
+              />
+            )}
+          </>
         </>
       ) : null}
 
-      { }
+      {}
       {showRowModal &&
         typeof document !== "undefined" &&
         createPortal(
@@ -901,7 +883,9 @@ const DynamicDataCard = ({ item }) => {
                           )}
                           {!fileUploading[String(f._id)] &&
                             rowForm[String(f._id)] && (
-                              <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>
+                              <span
+                                style={{ fontSize: "0.8rem", opacity: 0.8 }}
+                              >
                                 ✅{" "}
                                 {(() => {
                                   try {
@@ -950,7 +934,7 @@ const DynamicDataCard = ({ item }) => {
           document.body,
         )}
 
-      { }
+      {}
       {showTabModal &&
         typeof document !== "undefined" &&
         createPortal(
@@ -984,7 +968,9 @@ const DynamicDataCard = ({ item }) => {
                     />
                   </div>
                   <div className={styles.modalField}>
-                    <label>Detail (optional — add as many notes as you need)</label>
+                    <label>
+                      Detail (optional — add as many notes as you need)
+                    </label>
                     {tabDetailInputs.map((val, idx) => (
                       <div key={idx} className={styles.detailInputRow}>
                         <textarea
@@ -1045,8 +1031,8 @@ const DynamicDataCard = ({ item }) => {
                       placeholder="https://..."
                     />
                     <span style={{ fontSize: "0.78rem", opacity: 0.7 }}>
-                      Name only shows as plain text. Add a URL here and the
-                      name becomes a clickable &quot;Visit Link&quot;.
+                      Name only shows as plain text. Add a URL here and the name
+                      becomes a clickable &quot;Visit Link&quot;.
                     </span>
                   </div>
                   <button
@@ -1062,7 +1048,6 @@ const DynamicDataCard = ({ item }) => {
           </div>,
           document.body,
         )}
-
     </div>
   );
 };

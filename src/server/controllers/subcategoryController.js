@@ -32,11 +32,6 @@ exports.createSubcategory = async (req, res) => {
       });
     }
 
-    // Without this check, anyone with a valid login could attach a
-    // subcategory to ANY categoryId (including another user's), simply
-    // by guessing/knowing the id — the subcategory itself was already
-    // being tagged with the caller's own userId, but nothing verified
-    // the parent category actually belonged to them first.
     const parentCategory = await Category.findOne({
       _id: categoryId,
       userId: req.user._id,
@@ -145,8 +140,6 @@ exports.deleteSubcategory = async (req, res) => {
     if (!deleted)
       return res.status(404).json({ success: false, message: "Not found" });
 
-    // Same orphaned-data issue as category deletion — items under this
-    // subcategory (and any files they reference) were never cleaned up.
     const itemsToDelete = await Item.find({
       subcategoryId: deleted._id,
       userId: req.user._id,

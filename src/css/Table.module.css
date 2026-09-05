@@ -55,15 +55,6 @@
   display: table-cell;
 }
 
-/* Single, consolidated mobile treatment for the table — this used to be
-   split across three separate @media(max-width:768px) blocks that kept
-   redefining .table/.tr/.td and fighting each other (last-rule-wins),
-   which is what made the table look unstable/inconsistent on small
-   screens. Everything table-related for mobile now lives here only.
-
-   Breakpoint is 600px (phones), not 768px — 768px is a tablet width and
-   should still show the real table/columns; only true small screens
-   switch to the stacked "card" layout. */
 @media (max-width: 600px) {
   .hideOnMobile {
     display: none !important;
@@ -74,20 +65,14 @@
   }
 
   .table {
-    display: block;
     width: 100%;
+    display: block;
     min-width: 100%;
   }
 
-  /* The native <tbody> has no class of its own, so without this it
-     keeps the browser's default `display: table-row-group`. Mixing
-     that with `.table`/`.tr` forced to `display: block` is what made
-     the card row shrink-to-fit and sit off to one side instead of
-     stretching full width — every level of the table needs to be
-     taken out of table layout together. */
   .table tbody {
-    display: block;
     width: 100%;
+    display: block;
   }
 
   .tr {
@@ -103,12 +88,12 @@
 
   .td {
     gap: 15px;
-    display: flex;
     min-width: 0;
+    display: flex;
     padding: 10px 0;
     text-align: right;
-    align-items: flex-start;
     word-break: break-word;
+    align-items: flex-start;
     border: none !important;
     overflow-wrap: break-word;
     justify-content: space-between;
@@ -171,8 +156,6 @@
 .dropdownMenu {
   right: 0;
   top: 115%;
-  /* Match the same fix as the modals — keep it clear of the Header's
-     z-index: 1000 in case the table sits near the top of the page. */
   z-index: 1200;
   padding: 5px 0;
   min-width: 190px;
@@ -241,8 +224,8 @@
     display: flex;
     font-size: 14px;
     align-items: center;
-    justify-content: center;
     width: auto !important;
+    justify-content: center;
     padding: 12px !important;
   }
 

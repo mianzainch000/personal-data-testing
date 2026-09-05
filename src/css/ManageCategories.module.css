@@ -286,6 +286,9 @@
 }
 
 .editBtn {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
   border: none;
   cursor: pointer;
   font-weight: 600;
@@ -294,9 +297,6 @@
   padding: 0.55rem 1rem;
   color: var(--text-inverse);
   background-color: var(--color-primary);
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
 }
 
 .editBtn:hover {
@@ -305,6 +305,9 @@
 }
 
 .deleteBtn {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
   border: none;
   cursor: pointer;
   font-weight: 600;
@@ -313,9 +316,6 @@
   padding: 0.55rem 1rem;
   color: var(--text-inverse);
   background-color: var(--color-danger);
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
 }
 
 .deleteBtn:hover {

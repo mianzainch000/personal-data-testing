@@ -1,7 +1,5 @@
 .modalOverlay {
   inset: 0;
-  /* Same header-overlap bug as the other modals — must stay above the
-     Header's z-index: 1000. */
   z-index: 1200;
   display: flex;
   position: fixed;

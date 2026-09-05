@@ -129,10 +129,6 @@ exports.login = async (req, res) => {
 
     let hasAccess = false;
     if (user.hashedCode && specialCode) {
-      // Guessing the special code through /login (instead of
-      // /verifySpecialCode) must count against the same lockout, or an
-      // attacker could brute-force it here where no counter was ever
-      // being incremented.
       const specialLock = await LoginAttempt.findOne({
         ip: req._clientIp,
         scope: "specialCode",
@@ -229,11 +225,6 @@ exports.forgotPassword = async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    // Always respond the same way whether or not the email is
-    // registered — returning a distinct "User not found" previously let
-    // anyone probe this endpoint to discover which emails have accounts
-    // on this app (user enumeration). Only the side effect (sending the
-    // email) is conditional on the account actually existing.
     const genericResponse = {
       message:
         "If an account exists for that email, a password reset link has been sent.",
@@ -293,13 +284,10 @@ exports.resetPassword = async (req, res) => {
         .json({ message: "Please provide at least one field to update" });
     }
 
-    // resetPassword had no length check at all, so a reset could set a
-    // password shorter than what signup requires — same 8-char minimum
-    // enforced here for consistency.
-    if (newPassword && newPassword.trim().length < 8) {
+    if (newPassword && newPassword.trim().length < 4) {
       return res
         .status(400)
-        .json({ message: "Password must be at least 8 characters" });
+        .json({ message: "Password must be at least 4 characters" });
     }
 
     if (newPassword && newPassword.trim() !== "") {
@@ -336,8 +324,8 @@ exports.validate = (method) => {
         check("password")
           .notEmpty()
           .withMessage("Password is required")
-          .isLength({ min: 8 })
-          .withMessage("Password must be at least 8 characters"),
+          .isLength({ min: 4 })
+          .withMessage("Password must be at least 4 characters"),
       ];
     }
 

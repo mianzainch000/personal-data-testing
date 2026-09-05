@@ -21,8 +21,8 @@
 
 .detailRemoveBtn {
   border: none;
-  cursor: pointer;
   flex-shrink: 0;
+  cursor: pointer;
   font-size: 0.85rem;
   border-radius: 8px;
   padding: 0.5rem 0.6rem;
@@ -40,8 +40,8 @@
   cursor: pointer;
   font-weight: 600;
   font-size: 0.82rem;
-  align-self: flex-start;
   border-radius: 8px;
+  align-self: flex-start;
   padding: 0.45rem 0.7rem;
   color: var(--color-primary);
   background: var(--color-ghost);
@@ -90,10 +90,6 @@
 
 .modalOverlay {
   inset: 0;
-  /* This used to be 999 — LOWER than the app's fixed Header bar
-     (z-index: 1000), so the header painted on top of the modal and
-     clipped its title/close button, exactly like the "Add Tab" screen.
-     Every fixed overlay in the app needs to sit above 1000. */
   z-index: 1200;
   display: flex;
   padding: 1rem;
@@ -105,46 +101,46 @@
 
 .modal {
   width: 100%;
+  display: flex;
+  min-height: 0;
   max-width: 400px;
   text-align: left;
   max-height: 90vh;
-  display: flex;
-  flex-direction: column;
+  overflow: hidden;
   position: relative;
   border-radius: 16px;
-  overflow: hidden;
+  flex-direction: column;
   background: var(--bg-main);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
-  min-height: 0;
 }
 
 .modalHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  flex-shrink: 0;
-  padding: 1.4rem 1.6rem 1rem;
-  border-bottom: 1px solid var(--color-ghost-hover);
-  position: sticky;
   top: 0;
   z-index: 1;
+  gap: 0.8rem;
+  display: flex;
+  flex-shrink: 0;
+  position: sticky;
+  align-items: center;
   background: var(--bg-main);
+  padding: 1.4rem 1.6rem 1rem;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-ghost-hover);
 }
 
 .modalBody {
+  min-height: 0;
+  flex: 1 1 auto;
   overflow-y: auto;
   padding: 1.2rem 1.6rem 1.7rem;
-  flex: 1 1 auto;
-  min-height: 0;
 }
 
 .modalClose {
-  flex-shrink: 0;
   color: #fff;
   width: 30px;
   border: none;
   height: 30px;
+  flex-shrink: 0;
   cursor: pointer;
   font-size: 0.9rem;
   border-radius: 8px;
@@ -158,9 +154,9 @@
 
 .modalTitle {
   flex: 1;
+  margin: 0;
   min-width: 0;
   font-weight: 700;
-  margin: 0;
   font-size: 1.15rem;
   color: var(--text-primary);
 }
@@ -204,6 +200,9 @@
 }
 
 .modalSubmit {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
   border: none;
   cursor: pointer;
   font-weight: 600;
@@ -213,9 +212,6 @@
   margin-top: 0.4rem;
   color: var(--text-inverse);
   background-color: var(--color-primary);
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
 }
 
 .modalSubmit:hover {

@@ -206,9 +206,9 @@ const CategoryClientWrapper = () => {
       const res =
         editingCategory && selectedCategoryId
           ? await axios.put(
-            `manageCategories/api/${selectedCategoryId}`,
-            payload,
-          )
+              `manageCategories/api/${selectedCategoryId}`,
+              payload,
+            )
           : await axios.post("manageCategories/api", payload);
 
       showAlertMessage({
@@ -258,7 +258,7 @@ const CategoryClientWrapper = () => {
       detail: selectedSubcategory.detail || "",
       position:
         selectedSubcategory.order !== undefined &&
-          selectedSubcategory.order !== null
+        selectedSubcategory.order !== null
           ? String(selectedSubcategory.order + 1)
           : "",
     });
@@ -286,9 +286,9 @@ const CategoryClientWrapper = () => {
       const res =
         editingSubcategory && selectedSubcategoryId
           ? await axios.put(
-            `manageCategories/subcategories/api/${selectedSubcategoryId}`,
-            payload,
-          )
+              `manageCategories/subcategories/api/${selectedSubcategoryId}`,
+              payload,
+            )
           : await axios.post("manageCategories/subcategories/api", payload);
 
       showAlertMessage({
@@ -364,7 +364,7 @@ const CategoryClientWrapper = () => {
     setNewFieldLabel("");
     setNewFieldType("text");
     setEditingFieldIndex(null);
-    // Auto-expand the advanced features panel if any were already picked
+
     setShowAdvancedFeatures(
       WIDGET_OPTIONS.some((opt) => mergedConfig[opt.key]),
     );
@@ -466,7 +466,8 @@ const CategoryClientWrapper = () => {
 
       if (skipped > 0) {
         setBackupResultMsg(
-          `Backup downloaded, but ${skipped} protected categor${skipped === 1 ? "y was" : "ies were"
+          `Backup downloaded, but ${skipped} protected categor${
+            skipped === 1 ? "y was" : "ies were"
           } NOT included (session not unlocked). Use 🔓 to enter the code and download again if you need them too.`,
         );
         showAlertMessage({
@@ -569,8 +570,9 @@ const CategoryClientWrapper = () => {
         isOpen={showImportConfirm}
         title="Import Backup"
         confirmText="Yes, Import"
-        message={`This file contains ${pendingImportBackup?.categories?.length || 0
-          } category(ies). Any category with a matching name will be REPLACED (the old one deleted, the new one created). All other categories will be left untouched. Continue?`}
+        message={`This file contains ${
+          pendingImportBackup?.categories?.length || 0
+        } category(ies). Any category with a matching name will be REPLACED (the old one deleted, the new one created). All other categories will be left untouched. Continue?`}
         onConfirm={confirmImportFullBackup}
         onCancel={() => {
           setShowImportConfirm(false);
@@ -581,16 +583,18 @@ const CategoryClientWrapper = () => {
       <div className={styles.adminTabs}>
         <button
           type="button"
-          className={`${styles.adminTabBtn} ${adminTab === "content" ? styles.adminTabActive : ""
-            }`}
+          className={`${styles.adminTabBtn} ${
+            adminTab === "content" ? styles.adminTabActive : ""
+          }`}
           onClick={() => setAdminTab("content")}
         >
           📂 Content
         </button>
         <button
           type="button"
-          className={`${styles.adminTabBtn} ${adminTab === "backup" ? styles.adminTabActive : ""
-            }`}
+          className={`${styles.adminTabBtn} ${
+            adminTab === "backup" ? styles.adminTabActive : ""
+          }`}
           onClick={() => setAdminTab("backup")}
         >
           🧳 Backup
@@ -642,7 +646,7 @@ const CategoryClientWrapper = () => {
         </div>
       ) : (
         <>
-          { }
+          {}
           <div className={styles.stepCard}>
             <p className={styles.stepTitle}>
               <span className={styles.stepBadge}>1</span>
@@ -782,7 +786,7 @@ const CategoryClientWrapper = () => {
             )}
           </div>
 
-          { }
+          {}
           {selectedCategoryId && (
             <div className={styles.stepCard}>
               <p className={styles.stepTitle}>
@@ -884,7 +888,7 @@ const CategoryClientWrapper = () => {
             </div>
           )}
 
-          { }
+          {}
           {selectedCategoryId && (
             <div className={styles.stepCard}>
               <p className={styles.stepTitle}>
@@ -935,9 +939,7 @@ const CategoryClientWrapper = () => {
                     <button
                       type="button"
                       className={styles.toggleCreate}
-                      onClick={() =>
-                        setShowAdvancedFeatures((s) => !s)
-                      }
+                      onClick={() => setShowAdvancedFeatures((s) => !s)}
                     >
                       {showAdvancedFeatures ? "▾" : "▸"} ⚡ Most Advanced
                       Feature (optional)
@@ -985,9 +987,9 @@ const CategoryClientWrapper = () => {
                             }}
                           >
                             Each tab always shows as a table now — don&apos;t
-                            forget to enable &quot;Table&quot; above and add
-                            at least one field/column below, or the tab will
-                            have nowhere to put data.
+                            forget to enable &quot;Table&quot; above and add at
+                            least one field/column below, or the tab will have
+                            nowhere to put data.
                           </p>
                         )}
 
@@ -1137,10 +1139,11 @@ const CategoryClientWrapper = () => {
                                   {itemForm.fields.map((f, idx) => (
                                     <span
                                       key={f._id || `new-${idx}`}
-                                      className={`${styles.fieldChip} ${editingFieldIndex === idx
-                                        ? styles.fieldChipEditing
-                                        : ""
-                                        }`}
+                                      className={`${styles.fieldChip} ${
+                                        editingFieldIndex === idx
+                                          ? styles.fieldChipEditing
+                                          : ""
+                                      }`}
                                     >
                                       {f.type === "encrypt" && "🔒 "}
                                       {f.label} <em>({f.type})</em>
@@ -1215,10 +1218,10 @@ const CategoryClientWrapper = () => {
                                         fields: itemForm.fields.map((f, i) =>
                                           i === editingFieldIndex
                                             ? {
-                                              ...f,
-                                              label: newFieldLabel.trim(),
-                                              type: newFieldType,
-                                            }
+                                                ...f,
+                                                label: newFieldLabel.trim(),
+                                                type: newFieldType,
+                                              }
                                             : f,
                                         ),
                                       });
@@ -1301,7 +1304,7 @@ const CategoryClientWrapper = () => {
             </div>
           )}
 
-          { }
+          {}
           {selectedCategoryId && (
             <div className={styles.stepCard}>
               <p className={styles.stepTitle}>

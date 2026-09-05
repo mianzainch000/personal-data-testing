@@ -55,9 +55,6 @@ exports.createItem = async (req, res) => {
         .json({ success: false, message: "categoryId is required" });
     }
 
-    // Same class of bug as subcategories: without checking ownership
-    // here, a logged-in user could attach an item to any categoryId (or
-    // subcategoryId) they knew about, even one belonging to someone else.
     const parentCategory = await Category.findOne({
       _id: categoryId,
       userId: req.user._id,
