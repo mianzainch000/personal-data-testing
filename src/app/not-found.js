@@ -3,6 +3,14 @@ import { cookies } from "next/headers";
 import Header from "@/components/Header";
 import styles from "@/css/404.module.css";
 
+// Force this route to render dynamically instead of letting Next try to
+// build a static shell for it. Reading cookies() below makes this page
+// inherently dynamic — leaving that implicit is what was causing the
+// "Cannot find module for page: /_document" crash during `next build`
+// (Next 15 tries to prerender the global not-found page and trips over
+// the dynamic cookies() call). Being explicit here skips that attempt.
+export const dynamic = "force-dynamic";
+
 const Custom404 = async () => {
   const cookieStore = await cookies();
   const theme = cookieStore.get("theme")?.value || "light";

@@ -1,9 +1,28 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
+  width: 100%;
+  overflow-x: hidden;
   color: var(--text-primary);
   transition: all 0.3s ease-in-out;
   background-color: var(--bg-main);
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+img,
+svg {
+  max-width: 100%;
+  height: auto;
 }
 
 .container {

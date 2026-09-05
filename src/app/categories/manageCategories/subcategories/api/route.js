@@ -20,5 +20,5 @@ export async function GET(req) {
   const data = await axiosClient.get(
     `${apiConfig.subcategory.get}?categoryId=${categoryId}`,
   );
-  return Response.json(data?.data);
+  return Response.json(data?.data, { status: data?.status });
 }

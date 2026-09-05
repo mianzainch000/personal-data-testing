@@ -15,19 +15,13 @@ const itemRowSchema = new Schema({
   values: { type: Schema.Types.Mixed, default: {} },
 });
 
-const itemCardSchema = new Schema({
-  title: { type: String, trim: true, default: "" },
-  link: { type: String, trim: true, default: "" },
-  order: { type: Number, default: 0 },
-});
-
 const itemTabSchema = new Schema({
   tabName: { type: String, trim: true, default: "" },
   detail: { type: String, trim: true, default: "" },
+  linkTitle: { type: String, trim: true, default: "" },
   link: { type: String, trim: true, default: "" },
   order: { type: Number, default: 0 },
   rows: { type: [itemRowSchema], default: [] },
-  cards: { type: [itemCardSchema], default: [] },
 });
 
 const itemSchema = new mongoose.Schema(
@@ -81,6 +75,11 @@ const itemSchema = new mongoose.Schema(
 
       paginationRowsPerPage: { type: Schema.Types.Mixed, default: "all" },
       paginationCustomOptions: { type: [Number], default: [] },
+
+      // Lets a user rename the "+ Add Tab" button per item (e.g. "+ Add
+      // Meter" instead of the generic default) — same pattern as the
+      // custom row messages below.
+      addTabButtonLabel: { type: String, trim: true, default: "" },
 
       messages: {
         rowAdded: { type: String, trim: true, default: "" },

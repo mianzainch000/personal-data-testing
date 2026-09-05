@@ -1,11 +1,14 @@
 require("dotenv").config();
 const User = require("../models/userSchema");
+const LoginAttempt = require("../models/loginAttemptSchema");
 const nodemailer = require("nodemailer");
 const ForgetPasswordEmail = require("../emailTemplate");
 const { check, validationResult } = require("express-validator");
 const {
   registerFailedAttempt,
   clearFailedAttempts,
+  registerFailedSpecialCode,
+  clearFailedSpecialCode,
 } = require("../middleware/loginRateLimiter");
 const {
   verifyToken,
@@ -126,7 +129,25 @@ exports.login = async (req, res) => {
 
     let hasAccess = false;
     if (user.hashedCode && specialCode) {
-      hasAccess = await comparePassword(specialCode, user.hashedCode);
+      // Guessing the special code through /login (instead of
+      // /verifySpecialCode) must count against the same lockout, or an
+      // attacker could brute-force it here where no counter was ever
+      // being incremented.
+      const specialLock = await LoginAttempt.findOne({
+        ip: req._clientIp,
+        scope: "specialCode",
+      });
+      const isSpecialLocked =
+        specialLock?.lockedUntil && specialLock.lockedUntil > new Date();
+
+      if (!isSpecialLocked) {
+        hasAccess = await comparePassword(specialCode, user.hashedCode);
+        if (hasAccess) {
+          await clearFailedSpecialCode(req);
+        } else {
+          await registerFailedSpecialCode(req);
+        }
+      }
     } else {
       console.log(
         "Warning: User has no hashedCode in DB or specialCode missing in request",
@@ -177,8 +198,11 @@ exports.verifySpecialCode = async (req, res) => {
 
     const isMatch = await comparePassword(specialCode, user.hashedCode);
     if (!isMatch) {
+      await registerFailedSpecialCode(req);
       return res.status(401).json({ message: "Incorrect special code" });
     }
+
+    await clearFailedSpecialCode(req);
 
     const token = generateToken(
       { _id: user._id, hasAccess: true },
@@ -204,8 +228,19 @@ exports.forgotPassword = async (req, res) => {
     const { email } = req.body;
 
     const user = await User.findOne({ email });
+
+    // Always respond the same way whether or not the email is
+    // registered — returning a distinct "User not found" previously let
+    // anyone probe this endpoint to discover which emails have accounts
+    // on this app (user enumeration). Only the side effect (sending the
+    // email) is conditional on the account actually existing.
+    const genericResponse = {
+      message:
+        "If an account exists for that email, a password reset link has been sent.",
+    };
+
     if (!user) {
-      return res.status(404).send({ message: "User not found." });
+      return res.status(200).send(genericResponse);
     }
 
     const tokenEmail = generateToken(
@@ -237,9 +272,7 @@ exports.forgotPassword = async (req, res) => {
 
     await transporter.sendMail(emailOptions);
 
-    return res
-      .status(200)
-      .send({ message: "Password reset email sent successfully." });
+    return res.status(200).send(genericResponse);
   } catch (error) {
     return res.status(500).send({ message: "Internal server error." });
   }
@@ -254,18 +287,27 @@ exports.resetPassword = async (req, res) => {
     const user = await User.findOne({ email: decoded.email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    if (!newPassword && !newSpecialCode) {
+      return res
+        .status(400)
+        .json({ message: "Please provide at least one field to update" });
+    }
+
+    // resetPassword had no length check at all, so a reset could set a
+    // password shorter than what signup requires — same 8-char minimum
+    // enforced here for consistency.
+    if (newPassword && newPassword.trim().length < 8) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 8 characters" });
+    }
+
     if (newPassword && newPassword.trim() !== "") {
       user.password = await generateHashPassword(newPassword);
     }
 
     if (newSpecialCode && newSpecialCode.trim() !== "") {
       user.hashedCode = await generateHashPassword(newSpecialCode);
-    }
-
-    if (!newPassword && !newSpecialCode) {
-      return res
-        .status(400)
-        .json({ message: "Please provide at least one field to update" });
     }
 
     await user.save();
@@ -294,8 +336,8 @@ exports.validate = (method) => {
         check("password")
           .notEmpty()
           .withMessage("Password is required")
-          .isLength({ min: 4 })
-          .withMessage("Password must be at least 4 characters"),
+          .isLength({ min: 8 })
+          .withMessage("Password must be at least 8 characters"),
       ];
     }
 

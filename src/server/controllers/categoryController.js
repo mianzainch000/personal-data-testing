@@ -1,5 +1,8 @@
 const Category = require("../models/categorySchema");
 const Subcategory = require("../models/subcategorySchema");
+const Item = require("../models/itemSchema");
+const UploadedFile = require("../models/uploadedFileSchema");
+const { extractFileIdsFromMany } = require("../helper/itemFiles");
 const { isCategoryAccessible } = require("../helper/categoryAccess");
 
 exports.getCategories = async (req, res) => {
@@ -139,6 +142,28 @@ exports.deleteCategory = async (req, res) => {
     });
     if (!deleted)
       return res.status(404).json({ success: false, message: "Not found" });
+
+    // Deleting a category used to leave its Items behind as orphaned
+    // documents (still tagged with the now-deleted categoryId) — they'd
+    // never show up in the UI again but would sit in the database
+    // forever, including any encrypted personal-data field values and
+    // any uploaded files they referenced.
+    const itemsToDelete = await Item.find({
+      categoryId: deleted._id,
+      userId: req.user._id,
+    });
+    const fileIds = extractFileIdsFromMany(itemsToDelete);
+    if (fileIds.length) {
+      await UploadedFile.deleteMany({
+        _id: { $in: fileIds },
+        userId: req.user._id,
+      });
+    }
+
+    await Item.deleteMany({
+      categoryId: deleted._id,
+      userId: req.user._id,
+    });
 
     await Subcategory.deleteMany({
       categoryId: deleted._id,

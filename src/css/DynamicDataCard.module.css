@@ -5,32 +5,51 @@
   font-size: 0.85rem;
 }
 
-.cardsListWrap {
-  margin-top: 0.5rem;
+.tabDetailText {
+  line-height: 1.6;
 }
 
-.simpleCardsList {
-  gap: 0.6rem;
-  display: flex;
-  margin-top: 1rem;
-  flex-direction: column;
-}
-
-.simpleCardRow {
-  gap: 0.7rem;
+.detailInputRow {
+  gap: 0.5rem;
   display: flex;
   align-items: center;
-  border-radius: 10px;
-  padding: 0.8rem 1rem;
+}
+
+.detailInputRow textarea {
+  flex: 1;
+}
+
+.detailRemoveBtn {
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  color: var(--text-primary);
   background: var(--color-ghost);
   border: 1px solid var(--color-ghost-hover);
 }
 
-.simpleCardRow > a,
-.simpleCardRow > span:first-child {
-  flex: 1;
-  min-width: 0;
-  word-break: break-word;
+.detailRemoveBtn:hover {
+  opacity: 0.85;
+}
+
+.addDetailBtn {
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.82rem;
+  align-self: flex-start;
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+  color: var(--color-primary);
+  background: var(--color-ghost);
+  border: 1px dashed var(--color-ghost-hover);
+}
+
+.addDetailBtn:hover {
+  opacity: 0.85;
 }
 
 .tabLink {
@@ -71,7 +90,11 @@
 
 .modalOverlay {
   inset: 0;
-  z-index: 999;
+  /* This used to be 999 — LOWER than the app's fixed Header bar
+     (z-index: 1000), so the header painted on top of the modal and
+     clipped its title/close button, exactly like the "Add Tab" screen.
+     Every fixed overlay in the app needs to sit above 1000. */
+  z-index: 1200;
   display: flex;
   padding: 1rem;
   position: fixed;
@@ -85,24 +108,45 @@
   max-width: 400px;
   text-align: left;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   position: relative;
   border-radius: 16px;
-  padding: 1.7rem 1.6rem;
+  overflow: hidden;
   background: var(--bg-main);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  min-height: 0;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-shrink: 0;
+  padding: 1.4rem 1.6rem 1rem;
+  border-bottom: 1px solid var(--color-ghost-hover);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-main);
+}
+
+.modalBody {
+  overflow-y: auto;
+  padding: 1.2rem 1.6rem 1.7rem;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .modalClose {
-  top: 14px;
-  right: 14px;
+  flex-shrink: 0;
   color: #fff;
   width: 30px;
   border: none;
   height: 30px;
   cursor: pointer;
   font-size: 0.9rem;
-  position: absolute;
   border-radius: 8px;
   transition: opacity 0.2s ease;
   background: var(--color-danger);
@@ -113,8 +157,10 @@
 }
 
 .modalTitle {
+  flex: 1;
+  min-width: 0;
   font-weight: 700;
-  margin: 0 0 1.2rem;
+  margin: 0;
   font-size: 1.15rem;
   color: var(--text-primary);
 }

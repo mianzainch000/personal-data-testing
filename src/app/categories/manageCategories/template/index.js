@@ -34,6 +34,7 @@ const emptyItemConfig = {
   json: false,
   exportJson: false,
   newRowPosition: "top",
+  addTabButtonLabel: "",
   messages: { rowAdded: "", rowUpdated: "", rowDeleted: "" },
 };
 const emptyItemForm = {
@@ -47,8 +48,8 @@ const emptyItemForm = {
 };
 
 const WIDGET_OPTIONS = [
-  { key: "table", icon: "📊", label: "Table (dynamic responsive table)" },
-  { key: "tabs", icon: "📁", label: "Tabs (groups like Meter 1 / Meter 2)" },
+  { key: "table", icon: "📊", label: "Table" },
+  { key: "tabs", icon: "📁", label: "Tabs" },
   { key: "dragDrop", icon: "🔀", label: "Drag & Drop Reorder" },
   { key: "pagination", icon: "🔢", label: "Pagination" },
   { key: "pdf", icon: "📄", label: "PDF Download" },
@@ -87,6 +88,7 @@ const CategoryClientWrapper = () => {
   const [newFieldLabel, setNewFieldLabel] = useState("");
   const [newFieldType, setNewFieldType] = useState("text");
   const [editingFieldIndex, setEditingFieldIndex] = useState(null);
+  const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -204,9 +206,9 @@ const CategoryClientWrapper = () => {
       const res =
         editingCategory && selectedCategoryId
           ? await axios.put(
-              `manageCategories/api/${selectedCategoryId}`,
-              payload,
-            )
+            `manageCategories/api/${selectedCategoryId}`,
+            payload,
+          )
           : await axios.post("manageCategories/api", payload);
 
       showAlertMessage({
@@ -256,7 +258,7 @@ const CategoryClientWrapper = () => {
       detail: selectedSubcategory.detail || "",
       position:
         selectedSubcategory.order !== undefined &&
-        selectedSubcategory.order !== null
+          selectedSubcategory.order !== null
           ? String(selectedSubcategory.order + 1)
           : "",
     });
@@ -284,9 +286,9 @@ const CategoryClientWrapper = () => {
       const res =
         editingSubcategory && selectedSubcategoryId
           ? await axios.put(
-              `manageCategories/subcategories/api/${selectedSubcategoryId}`,
-              payload,
-            )
+            `manageCategories/subcategories/api/${selectedSubcategoryId}`,
+            payload,
+          )
           : await axios.post("manageCategories/subcategories/api", payload);
 
       showAlertMessage({
@@ -336,10 +338,12 @@ const CategoryClientWrapper = () => {
     setNewFieldLabel("");
     setNewFieldType("text");
     setEditingFieldIndex(null);
+    setShowAdvancedFeatures(false);
     setShowItemForm(true);
   };
 
   const openEditItem = (item) => {
+    const mergedConfig = { ...emptyItemConfig, ...(item.config || {}) };
     setItemForm({
       title: item.title || "",
       subheading: item.subheading || "",
@@ -349,7 +353,7 @@ const CategoryClientWrapper = () => {
         item.order !== undefined && item.order !== null
           ? String(item.order + 1)
           : "",
-      config: { ...emptyItemConfig, ...(item.config || {}) },
+      config: mergedConfig,
       fields: (item.fields || []).map((f) => ({
         _id: f._id,
         label: f.label,
@@ -360,6 +364,10 @@ const CategoryClientWrapper = () => {
     setNewFieldLabel("");
     setNewFieldType("text");
     setEditingFieldIndex(null);
+    // Auto-expand the advanced features panel if any were already picked
+    setShowAdvancedFeatures(
+      WIDGET_OPTIONS.some((opt) => mergedConfig[opt.key]),
+    );
     setShowItemForm(true);
   };
 
@@ -458,8 +466,7 @@ const CategoryClientWrapper = () => {
 
       if (skipped > 0) {
         setBackupResultMsg(
-          `Backup downloaded, but ${skipped} protected categor${
-            skipped === 1 ? "y was" : "ies were"
+          `Backup downloaded, but ${skipped} protected categor${skipped === 1 ? "y was" : "ies were"
           } NOT included (session not unlocked). Use 🔓 to enter the code and download again if you need them too.`,
         );
         showAlertMessage({
@@ -562,9 +569,8 @@ const CategoryClientWrapper = () => {
         isOpen={showImportConfirm}
         title="Import Backup"
         confirmText="Yes, Import"
-        message={`This file contains ${
-          pendingImportBackup?.categories?.length || 0
-        } category(ies). Any category with a matching name will be REPLACED (the old one deleted, the new one created). All other categories will be left untouched. Continue?`}
+        message={`This file contains ${pendingImportBackup?.categories?.length || 0
+          } category(ies). Any category with a matching name will be REPLACED (the old one deleted, the new one created). All other categories will be left untouched. Continue?`}
         onConfirm={confirmImportFullBackup}
         onCancel={() => {
           setShowImportConfirm(false);
@@ -575,18 +581,16 @@ const CategoryClientWrapper = () => {
       <div className={styles.adminTabs}>
         <button
           type="button"
-          className={`${styles.adminTabBtn} ${
-            adminTab === "content" ? styles.adminTabActive : ""
-          }`}
+          className={`${styles.adminTabBtn} ${adminTab === "content" ? styles.adminTabActive : ""
+            }`}
           onClick={() => setAdminTab("content")}
         >
           📂 Content
         </button>
         <button
           type="button"
-          className={`${styles.adminTabBtn} ${
-            adminTab === "backup" ? styles.adminTabActive : ""
-          }`}
+          className={`${styles.adminTabBtn} ${adminTab === "backup" ? styles.adminTabActive : ""
+            }`}
           onClick={() => setAdminTab("backup")}
         >
           🧳 Backup
@@ -638,7 +642,7 @@ const CategoryClientWrapper = () => {
         </div>
       ) : (
         <>
-          {}
+          { }
           <div className={styles.stepCard}>
             <p className={styles.stepTitle}>
               <span className={styles.stepBadge}>1</span>
@@ -778,7 +782,7 @@ const CategoryClientWrapper = () => {
             )}
           </div>
 
-          {}
+          { }
           {selectedCategoryId && (
             <div className={styles.stepCard}>
               <p className={styles.stepTitle}>
@@ -844,7 +848,7 @@ const CategoryClientWrapper = () => {
                 <form className={styles.createPanel} onSubmit={submitSubForm}>
                   <input
                     type="text"
-                    placeholder="Sub Heading Name (e.g. Namaz, Wudu)"
+                    placeholder="Sub Heading Name (e.g. Section 1, Section 2)"
                     value={subForm.subcategoryName}
                     onChange={(e) =>
                       setSubForm({
@@ -880,7 +884,7 @@ const CategoryClientWrapper = () => {
             </div>
           )}
 
-          {}
+          { }
           {selectedCategoryId && (
             <div className={styles.stepCard}>
               <p className={styles.stepTitle}>
@@ -928,70 +932,25 @@ const CategoryClientWrapper = () => {
                   />
 
                   <div className={styles.widgetSection}>
-                    <p className={styles.widgetGridCaption}>
-                      Card type (optional) — pick Table for rows/columns, Tabs
-                      for named groups, or both
-                    </p>
-                    <div className={styles.checkboxGrid}>
-                      <label className={styles.checkboxItem}>
-                        <input
-                          type="checkbox"
-                          checked={itemForm.config.table}
-                          onChange={(e) =>
-                            setItemForm({
-                              ...itemForm,
-                              config: {
-                                ...itemForm.config,
-                                table: e.target.checked,
-                              },
-                            })
-                          }
-                        />
-                        <span className={styles.checkboxIcon}>📊</span>
-                        Table (dynamic responsive table)
-                      </label>
-                      <label className={styles.checkboxItem}>
-                        <input
-                          type="checkbox"
-                          checked={itemForm.config.tabs}
-                          onChange={(e) =>
-                            setItemForm({
-                              ...itemForm,
-                              config: {
-                                ...itemForm.config,
-                                tabs: e.target.checked,
-                              },
-                            })
-                          }
-                        />
-                        <span className={styles.checkboxIcon}>📁</span>
-                        Tabs (groups like Meter 1 / Meter 2)
-                      </label>
-                    </div>
+                    <button
+                      type="button"
+                      className={styles.toggleCreate}
+                      onClick={() =>
+                        setShowAdvancedFeatures((s) => !s)
+                      }
+                    >
+                      {showAdvancedFeatures ? "▾" : "▸"} ⚡ Most Advanced
+                      Feature (optional)
+                    </button>
 
-                    {itemForm.config.tabs && !itemForm.config.table && (
-                      <p
-                        style={{
-                          fontSize: "0.78rem",
-                          opacity: 0.75,
-                          margin: "0.4rem 0 0",
-                        }}
-                      >
-                        Table isn&apos;t enabled, so each tab will show a simple
-                        list of title + link cards instead of a data table (add
-                        them from the card itself).
-                      </p>
-                    )}
-
-                    {(itemForm.config.table || itemForm.config.tabs) && (
+                    {showAdvancedFeatures && (
                       <>
                         <p className={styles.widgetGridCaption}>
-                          Advanced options (optional)
+                          Pick a card type — Table for rows/columns, Tabs for
+                          named groups, or both — plus any extra options
                         </p>
                         <div className={styles.checkboxGrid}>
-                          {WIDGET_OPTIONS.filter(
-                            (opt) => opt.key !== "table" && opt.key !== "tabs",
-                          ).map((opt) => (
+                          {WIDGET_OPTIONS.map((opt) => (
                             <label
                               key={opt.key}
                               className={styles.checkboxItem}
@@ -1016,6 +975,50 @@ const CategoryClientWrapper = () => {
                             </label>
                           ))}
                         </div>
+
+                        {itemForm.config.tabs && !itemForm.config.table && (
+                          <p
+                            style={{
+                              fontSize: "0.78rem",
+                              opacity: 0.75,
+                              margin: "0.4rem 0 0",
+                            }}
+                          >
+                            Each tab always shows as a table now — don&apos;t
+                            forget to enable &quot;Table&quot; above and add
+                            at least one field/column below, or the tab will
+                            have nowhere to put data.
+                          </p>
+                        )}
+
+                        {itemForm.config.tabs && (
+                          <div style={{ marginTop: "0.8rem" }}>
+                            <label
+                              style={{
+                                display: "block",
+                                fontSize: "0.85rem",
+                                fontWeight: 600,
+                                marginBottom: "0.3rem",
+                              }}
+                            >
+                              &quot;Add Tab&quot; button label (optional)
+                            </label>
+                            <input
+                              type="text"
+                              placeholder='e.g. "+ Add Item" — leave blank to use "+ Add Tab"'
+                              value={itemForm.config.addTabButtonLabel || ""}
+                              onChange={(e) =>
+                                setItemForm({
+                                  ...itemForm,
+                                  config: {
+                                    ...itemForm.config,
+                                    addTabButtonLabel: e.target.value,
+                                  },
+                                })
+                              }
+                            />
+                          </div>
+                        )}
 
                         {itemForm.config.table && (
                           <>
@@ -1068,7 +1071,7 @@ const CategoryClientWrapper = () => {
                             >
                               <input
                                 type="text"
-                                placeholder="Message when a row is added (e.g. Meter reading added)"
+                                placeholder="Message when a row is added (e.g. Entry added)"
                                 value={itemForm.config.messages?.rowAdded || ""}
                                 onChange={(e) =>
                                   setItemForm({
@@ -1134,11 +1137,10 @@ const CategoryClientWrapper = () => {
                                   {itemForm.fields.map((f, idx) => (
                                     <span
                                       key={f._id || `new-${idx}`}
-                                      className={`${styles.fieldChip} ${
-                                        editingFieldIndex === idx
-                                          ? styles.fieldChipEditing
-                                          : ""
-                                      }`}
+                                      className={`${styles.fieldChip} ${editingFieldIndex === idx
+                                        ? styles.fieldChipEditing
+                                        : ""
+                                        }`}
                                     >
                                       {f.type === "encrypt" && "🔒 "}
                                       {f.label} <em>({f.type})</em>
@@ -1180,7 +1182,7 @@ const CategoryClientWrapper = () => {
                               <div className={styles.inlineRow}>
                                 <input
                                   type="text"
-                                  placeholder="Field name (e.g. Month, Reading, Amount)"
+                                  placeholder="Field name (e.g. Name, Date, Amount)"
                                   value={newFieldLabel}
                                   onChange={(e) =>
                                     setNewFieldLabel(e.target.value)
@@ -1213,10 +1215,10 @@ const CategoryClientWrapper = () => {
                                         fields: itemForm.fields.map((f, i) =>
                                           i === editingFieldIndex
                                             ? {
-                                                ...f,
-                                                label: newFieldLabel.trim(),
-                                                type: newFieldType,
-                                              }
+                                              ...f,
+                                              label: newFieldLabel.trim(),
+                                              type: newFieldType,
+                                            }
                                             : f,
                                         ),
                                       });
@@ -1299,7 +1301,7 @@ const CategoryClientWrapper = () => {
             </div>
           )}
 
-          {}
+          { }
           {selectedCategoryId && (
             <div className={styles.stepCard}>
               <p className={styles.stepTitle}>

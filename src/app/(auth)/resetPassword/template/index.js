@@ -33,6 +33,14 @@ const ResetPassword = () => {
 
     const { password, confirmPassword } = formData;
 
+    if (password && password.length < 8) {
+      showAlert({
+        message: "❌ Password must be at least 8 characters",
+        type: "error",
+      });
+      return;
+    }
+
     if (password !== confirmPassword) {
       showAlert({
         message: "❌Pasword or Confirm Password not match",

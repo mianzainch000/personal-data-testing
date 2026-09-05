@@ -1,4 +1,8 @@
 const Item = require("../models/itemSchema");
+const Category = require("../models/categorySchema");
+const Subcategory = require("../models/subcategorySchema");
+const UploadedFile = require("../models/uploadedFileSchema");
+const { extractFileIds } = require("../helper/itemFiles");
 const {
   encryptTabsValues,
   decryptTabsValues,
@@ -49,6 +53,31 @@ exports.createItem = async (req, res) => {
       return res
         .status(400)
         .json({ success: false, message: "categoryId is required" });
+    }
+
+    // Same class of bug as subcategories: without checking ownership
+    // here, a logged-in user could attach an item to any categoryId (or
+    // subcategoryId) they knew about, even one belonging to someone else.
+    const parentCategory = await Category.findOne({
+      _id: categoryId,
+      userId: req.user._id,
+    });
+    if (!parentCategory) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Category not found" });
+    }
+    if (subcategoryId) {
+      const parentSubcategory = await Subcategory.findOne({
+        _id: subcategoryId,
+        categoryId,
+        userId: req.user._id,
+      });
+      if (!parentSubcategory) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Subcategory not found" });
+      }
     }
 
     const hasFields = Array.isArray(fields) && fields.length > 0;
@@ -149,7 +178,10 @@ exports.updateItem = async (req, res) => {
     if (link !== undefined) item.link = link;
     if (config !== undefined) item.config = config;
     if (fields !== undefined) item.fields = fields;
-    if (tabs !== undefined) item.tabs = encryptTabsValues(tabs, item.fields);
+
+    if (tabs !== undefined) {
+      item.tabs = encryptTabsValues(tabs, item.fields);
+    }
 
     const hasFields = Array.isArray(item.fields) && item.fields.length > 0;
 
@@ -192,6 +224,14 @@ exports.deleteItem = async (req, res) => {
     });
     if (!deleted)
       return res.status(404).json({ success: false, message: "Not found" });
+
+    const fileIds = extractFileIds(deleted);
+    if (fileIds.length) {
+      await UploadedFile.deleteMany({
+        _id: { $in: fileIds },
+        userId: req.user._id,
+      });
+    }
 
     await Item.updateMany(
       {

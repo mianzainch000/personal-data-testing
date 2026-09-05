@@ -1,7 +1,7 @@
 const { Readable } = require("stream");
 const { EventEmitter } = require("events");
 
-function buildExpressRequest(method, urlPath, headers, bodyBuffer) {
+function buildExpressRequest(method, urlPath, headers, bodyBuffer, clientIp) {
   const req = new Readable();
   req._read = () => {};
   if (bodyBuffer && bodyBuffer.length) {
@@ -13,10 +13,35 @@ function buildExpressRequest(method, urlPath, headers, bodyBuffer) {
   req.url = urlPath;
   req.headers = headers;
   req.httpVersion = "1.1";
-  req.connection = {};
-  req.socket = {};
+  // Express's own `req.ip` (trust-proxy) resolution needs a real
+  // connection/socket remoteAddress to anchor its calculation — this
+  // synthetic request had none, which silently broke IP-based rate
+  // limiting. We resolve the real client IP ourselves below and expose
+  // it both the "normal" Express way and as a plain, dependency-free
+  // property so callers never have to trust Express internals here.
+  req.connection = { remoteAddress: clientIp };
+  req.socket = { remoteAddress: clientIp };
+  req.ip = clientIp;
+  req.__clientIp = clientIp;
 
   return req;
+}
+
+// Resolves the real client IP from standard forwarding headers. A proxy
+// chain is built left-to-right as "<original>, <hop1>, <hop2>, ..." — each
+// hop appends the address it saw, so the LAST entry is the one added by
+// the platform's own edge (the hop we actually trust), while the FIRST
+// entry can be freely set by the client itself and must never be trusted
+// for security decisions like login/rate-limit lockouts.
+function resolveClientIp(headers) {
+  const forwarded = headers["x-forwarded-for"];
+  if (forwarded) {
+    const parts = forwarded.split(",").map((p) => p.trim()).filter(Boolean);
+    if (parts.length) return parts[parts.length - 1];
+  }
+  const realIp = headers["x-real-ip"];
+  if (realIp) return realIp.trim();
+  return "unknown";
 }
 
 function buildExpressResponse() {
@@ -62,7 +87,13 @@ async function runExpressApp(app, request, urlPath) {
     bodyBuffer = Buffer.from(arrayBuffer);
   }
 
-  const req = buildExpressRequest(request.method, urlPath, headers, bodyBuffer);
+  const req = buildExpressRequest(
+    request.method,
+    urlPath,
+    headers,
+    bodyBuffer,
+    resolveClientIp(headers),
+  );
   const res = buildExpressResponse();
 
   await new Promise((resolve) => {

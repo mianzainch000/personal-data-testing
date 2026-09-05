@@ -19,5 +19,5 @@ export const getData = async () => {
 
 export async function GET() {
   const data = await getData();
-  return Response.json(data?.data);
+  return Response.json(data?.data, { status: data?.status });
 }

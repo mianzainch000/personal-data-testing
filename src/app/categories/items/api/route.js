@@ -10,7 +10,7 @@ export async function GET(req) {
   if (subcategoryId) qs.set("subcategoryId", subcategoryId);
 
   const data = await axiosClient.get(`${apiConfig.item.get}?${qs}`);
-  return Response.json(data?.data);
+  return Response.json(data?.data, { status: data?.status });
 }
 
 export async function POST(req) {

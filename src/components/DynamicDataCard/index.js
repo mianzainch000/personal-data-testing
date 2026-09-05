@@ -13,6 +13,7 @@ import ConfirmModal from "@/components/ConfirmModal";
 import styles from "@/css/DynamicDataCard.module.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import handleAxiosError from "@/components/HandleAxiosError";
+import { getCookie, setCookie } from "cookies-next";
 
 const emptyRowFormFrom = (fields) =>
   Object.fromEntries(fields.map((f) => [String(f._id), ""]));
@@ -42,17 +43,12 @@ const DynamicDataCard = ({ item }) => {
   const [fileUploading, setFileUploading] = useState({});
   const [submittingRow, setSubmittingRow] = useState(false);
   const [submittingTab, setSubmittingTab] = useState(false);
-  const [submittingCard, setSubmittingCard] = useState(false);
-
-  const [showCardModal, setShowCardModal] = useState(false);
-  const [cardTitleInput, setCardTitleInput] = useState("");
-  const [cardLinkInput, setCardLinkInput] = useState("");
-  const [editingCardId, setEditingCardId] = useState(null);
 
   const [showTabModal, setShowTabModal] = useState(false);
   const [tabNameInput, setTabNameInput] = useState("");
-  const [tabDetailInput, setTabDetailInput] = useState("");
-  const [tabLinkInput, setTabLinkInput] = useState("");
+  const [tabDetailInputs, setTabDetailInputs] = useState([""]);
+  const [tabLinkTitleInput, setTabLinkTitleInput] = useState("");
+  const [tabLinkUrlInput, setTabLinkUrlInput] = useState("");
   const [editingTabId, setEditingTabId] = useState(null);
 
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -66,8 +62,24 @@ const DynamicDataCard = ({ item }) => {
   useEffect(() => {
     const list = item.tabs || [];
     setTabs(list);
-    setActiveTabId(list[0]?._id);
+    const savedTabId = getCookie(`activeTab_${item._id}`);
+    const isSavedValid = savedTabId && list.some((t) => t._id === savedTabId);
+    setActiveTabId(isSavedValid ? savedTabId : list[0]?._id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item._id]);
+
+  // Select a tab and persist the choice (per card) in a cookie so it
+  // survives a refresh. Writing the cookie right here — instead of in a
+  // separate effect that reacts to activeTabId — avoids a race where an
+  // effect fires with a stale value and overwrites the cookie we just read
+  // on mount.
+  const selectTab = (tabId) => {
+    setActiveTabId(tabId);
+    if (item._id && tabId)
+      setCookie(`activeTab_${item._id}`, tabId, {
+        maxAge: 60 * 60 * 24 * 365,
+      });
+  };
 
   useEffect(() => {
     const handler = (e) => {
@@ -142,9 +154,9 @@ const DynamicDataCard = ({ item }) => {
     effectiveRowsPerPage === "all"
       ? filteredRows
       : filteredRows.slice(
-          pageStartIndex,
-          pageStartIndex + effectiveRowsPerPage,
-        );
+        pageStartIndex,
+        pageStartIndex + effectiveRowsPerPage,
+      );
 
   const tableData = pageRows.map((r) => {
     const values = { ...(r.values || {}) };
@@ -206,7 +218,7 @@ const DynamicDataCard = ({ item }) => {
           paginationCustomOptions: newCustomOptions,
         },
       });
-    } catch {}
+    } catch { }
   };
 
   const handleRowsPerPageChange = (val) => {
@@ -221,16 +233,20 @@ const DynamicDataCard = ({ item }) => {
 
   const openAddTab = () => {
     setTabNameInput("");
-    setTabDetailInput("");
-    setTabLinkInput("");
+    setTabDetailInputs([""]);
+    setTabLinkTitleInput("");
+    setTabLinkUrlInput("");
     setEditingTabId(null);
     setShowTabModal(true);
   };
 
   const openRenameTab = (tab) => {
     setTabNameInput(tab.tabName || "");
-    setTabDetailInput(tab.detail || "");
-    setTabLinkInput(tab.link || "");
+    setTabDetailInputs(
+      tab.detail ? tab.detail.split("\n") : [""],
+    );
+    setTabLinkTitleInput(tab.linkTitle || "");
+    setTabLinkUrlInput(tab.link || "");
     setEditingTabId(tab._id);
     setShowTabModal(true);
   };
@@ -242,8 +258,12 @@ const DynamicDataCard = ({ item }) => {
 
     const tabPatch = {
       tabName: tabNameInput.trim(),
-      detail: tabDetailInput.trim(),
-      link: tabLinkInput.trim(),
+      detail: tabDetailInputs
+        .map((d) => d.trim())
+        .filter(Boolean)
+        .join("\n"),
+      linkTitle: tabLinkTitleInput.trim(),
+      link: tabLinkUrlInput.trim(),
     };
 
     let nextTabs;
@@ -264,7 +284,7 @@ const DynamicDataCard = ({ item }) => {
       setShowTabModal(false);
       if (!editingTabId) {
         const created = saved[saved.length - 1];
-        if (created) setActiveTabId(created._id);
+        if (created) selectTab(created._id);
       }
     }
   };
@@ -272,88 +292,7 @@ const DynamicDataCard = ({ item }) => {
   const confirmDeleteTab = async () => {
     const nextTabs = tabs.filter((t) => t._id !== deleteTarget.id);
     const saved = await persistTabs(nextTabs, "Tab deleted!");
-    if (saved) setActiveTabId(saved[0]?._id);
-    setShowDeleteModal(false);
-    setDeleteTarget(null);
-  };
-
-  const openAddCard = () => {
-    setCardTitleInput("");
-    setCardLinkInput("");
-    setEditingCardId(null);
-    setShowCardModal(true);
-  };
-
-  const openEditCard = (card) => {
-    setCardTitleInput(card.title || "");
-    setCardLinkInput(card.link || "");
-    setEditingCardId(card._id);
-    setShowCardModal(true);
-  };
-
-  const submitCardModal = async (e) => {
-    e.preventDefault();
-    if (!cardTitleInput.trim() || submittingCard) return;
-    setSubmittingCard(true);
-
-    const workingTabs = tabs.length
-      ? tabs
-      : [{ tabName: "", order: 0, rows: [], cards: [] }];
-    const targetTabId = activeTab?._id;
-
-    const nextTabs = workingTabs.map((t, idx) => {
-      const isTarget = targetTabId ? t._id === targetTabId : idx === 0;
-      if (!isTarget) return t;
-      const cards = t.cards || [];
-      if (editingCardId) {
-        return {
-          ...t,
-          cards: cards.map((c) =>
-            c._id === editingCardId
-              ? {
-                  ...c,
-                  title: cardTitleInput.trim(),
-                  link: cardLinkInput.trim(),
-                }
-              : c,
-          ),
-        };
-      }
-      return {
-        ...t,
-        cards: [
-          ...cards,
-          {
-            title: cardTitleInput.trim(),
-            link: cardLinkInput.trim(),
-            order: cards.length,
-          },
-        ],
-      };
-    });
-
-    const saved = await persistTabs(
-      nextTabs,
-      editingCardId ? "Card updated!" : "Card added!",
-    );
-    setSubmittingCard(false);
-    if (saved) {
-      setShowCardModal(false);
-      setEditingCardId(null);
-      if (!activeTabId) setActiveTabId(saved[0]?._id);
-    }
-  };
-
-  const confirmDeleteCard = async () => {
-    const nextTabs = tabs.map((t) =>
-      t._id === activeTab._id
-        ? {
-            ...t,
-            cards: (t.cards || []).filter((c) => c._id !== deleteTarget.id),
-          }
-        : t,
-    );
-    await persistTabs(nextTabs, "Card deleted!");
+    if (saved) selectTab(saved[0]?._id);
     setShowDeleteModal(false);
     setDeleteTarget(null);
   };
@@ -459,7 +398,7 @@ const DynamicDataCard = ({ item }) => {
     if (saved) {
       setShowRowModal(false);
       setEditingRowId(null);
-      if (!activeTabId) setActiveTabId(saved[0]?._id);
+      if (!activeTabId) selectTab(saved[0]?._id);
     }
   };
 
@@ -467,9 +406,9 @@ const DynamicDataCard = ({ item }) => {
     const nextTabs = tabs.map((t) =>
       t._id === activeTab._id
         ? {
-            ...t,
-            rows: (t.rows || []).filter((r) => r._id !== deleteTarget.id),
-          }
+          ...t,
+          rows: (t.rows || []).filter((r) => r._id !== deleteTarget.id),
+        }
         : t,
     );
     await persistTabs(nextTabs, config.messages?.rowDeleted || "Row deleted!");
@@ -608,13 +547,16 @@ const DynamicDataCard = ({ item }) => {
   const confirmImport = async () => {
     if (pendingImportTabs) {
       const saved = await persistTabs(pendingImportTabs);
-      if (saved) setActiveTabId(saved[0]?._id);
+      if (saved) selectTab(saved[0]?._id);
     }
     setShowImportConfirm(false);
     setPendingImportTabs(null);
   };
 
-  if (config.table && !fields.length) {
+  // Table now always renders for tab content (the old "simple cards
+  // list" fallback for config.table === false was removed), so this
+  // guard must apply regardless of the config.table flag.
+  if (!fields.length) {
     return (
       <p className={styles.emptyHint}>
         This card doesn&apos;t have any fields (columns) yet. Go to Manage
@@ -634,17 +576,11 @@ const DynamicDataCard = ({ item }) => {
         message={
           deleteTarget?.type === "tab"
             ? "Deleting this tab will also delete all of its data. Continue?"
-            : deleteTarget?.type === "card"
-              ? "Are you sure you want to delete this card?"
-              : "Are you sure you want to delete this row?"
+            : "Are you sure you want to delete this row?"
         }
         confirmText="Yes, Delete"
         onConfirm={
-          deleteTarget?.type === "tab"
-            ? confirmDeleteTab
-            : deleteTarget?.type === "card"
-              ? confirmDeleteCard
-              : confirmDeleteRow
+          deleteTarget?.type === "tab" ? confirmDeleteTab : confirmDeleteRow
         }
         onCancel={() => {
           setShowDeleteModal(false);
@@ -667,7 +603,7 @@ const DynamicDataCard = ({ item }) => {
       {config.tabs && (
         <div className={styles.addTabRow}>
           <Button variant="primary" onClick={openAddTab}>
-            + Add Tab
+            {config.addTabButtonLabel?.trim() || "+ Add Tab"}
           </Button>
         </div>
       )}
@@ -678,7 +614,7 @@ const DynamicDataCard = ({ item }) => {
             <div
               key={t._id}
               className={`${mr.tab} ${t._id === activeTabId ? mr.active : ""}`}
-              onClick={() => setActiveTabId(t._id)}
+              onClick={() => selectTab(t._id)}
             >
               <span>{t.tabName || "Untitled"}</span>
               <span
@@ -709,39 +645,63 @@ const DynamicDataCard = ({ item }) => {
 
       {config.tabs && tabs.length === 0 && (
         <p className={styles.emptyHint}>
-          No tabs yet. Click <strong>+ Add Tab</strong> above to add data (e.g.
-          &quot;Meter 1&quot;).
+          No tabs yet. Click{" "}
+          <strong>{config.addTabButtonLabel?.trim() || "+ Add Tab"}</strong>{" "}
+          above to add data (e.g. &quot;Item 1&quot;).
         </p>
       )}
 
       {!config.tabs || activeTab ? (
         <>
-          {activeTab && (activeTab.detail || activeTab.link) && (
-            <div className={mr.consumerInfo}>
-              {activeTab.detail && (
-                <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>
-                  {activeTab.detail}
-                </p>
-              )}
-              {activeTab.link && (
-                <a href={activeTab.link} className={styles.tabLink}>
-                  🔗 {activeTab.link}
-                </a>
-              )}
-            </div>
-          )}
-
-          {config.table && (
-            <>
-              <div className={mr.buttonGroup}>
-                {(config.pdf || config.exportJson) && (
-                  <div
-                    className={tableStyles.splitButtonContainer}
-                    ref={exportWrapRef}
+          {activeTab &&
+            (activeTab.detail || activeTab.link || activeTab.linkTitle) && (
+              <div className={mr.consumerInfo} style={{ textAlign: "center" }}>
+                {activeTab.detail && (
+                  <p
+                    style={{ margin: 0, whiteSpace: "pre-wrap" }}
+                    className={styles.tabDetailText}
                   >
-                    <Button
-                      variant="ghost"
-                      onClick={() => setShowExportMenu((s) => !s)}
+                    {activeTab.detail}
+                  </p>
+                )}
+                {activeTab.link ? (
+                  <a
+                    href={activeTab.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.tabLink}
+                    style={{ display: "inline-block" }}
+                  >
+                    🔗 {activeTab.linkTitle || "Visit Link"}
+                  </a>
+                ) : (
+                  activeTab.linkTitle && (
+                    <p
+                      style={{ margin: 0 }}
+                      className={styles.tabDetailText}
+                    >
+                      {activeTab.linkTitle}
+                    </p>
+                  )
+                )}
+              </div>
+            )}
+
+          {/* Table is always shown for tab content now — the old
+              config.table toggle used to switch between this table and a
+              simple "title + link" cards list, but that fallback view has
+              been removed so every tab consistently uses the same,
+              responsive table. */}
+          <>
+            <div className={mr.buttonGroup}>
+              {(config.pdf || config.exportJson) && (
+                <div
+                  className={tableStyles.splitButtonContainer}
+                  ref={exportWrapRef}
+                >
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowExportMenu((s) => !s)}
                     >
                       ⬇ Options ▾
                     </Button>
@@ -888,60 +848,10 @@ const DynamicDataCard = ({ item }) => {
                 />
               )}
             </>
-          )}
-
-          {!config.table && (
-            <div className={styles.cardsListWrap}>
-              <Button variant="primary" onClick={openAddCard}>
-                + Add Card
-              </Button>
-
-              {!(activeTab?.cards || []).length ? (
-                <p className={styles.emptyHint}>
-                  No cards yet. Click + Add Card to add a title + link.
-                </p>
-              ) : (
-                <div className={styles.simpleCardsList}>
-                  {activeTab.cards.map((card) => (
-                    <div key={card._id} className={styles.simpleCardRow}>
-                      {card.link ? (
-                        <a
-                          href={card.link}
-                          className={styles.tabLink}
-                          style={{ margin: 0 }}
-                        >
-                          {card.title || card.link}
-                        </a>
-                      ) : (
-                        <span>{card.title}</span>
-                      )}
-                      <span
-                        className={styles.tabIcon}
-                        onClick={() => openEditCard(card)}
-                        title="Edit"
-                      >
-                        ✏️
-                      </span>
-                      <span
-                        className={styles.tabIcon}
-                        onClick={() => {
-                          setDeleteTarget({ type: "card", id: card._id });
-                          setShowDeleteModal(true);
-                        }}
-                        title="Delete"
-                      >
-                        🗑️
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
         </>
       ) : null}
 
-      {}
+      { }
       {showRowModal &&
         typeof document !== "undefined" &&
         createPortal(
@@ -950,93 +860,97 @@ const DynamicDataCard = ({ item }) => {
             onClick={() => setShowRowModal(false)}
           >
             <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                className={styles.modalClose}
-                onClick={() => setShowRowModal(false)}
-              >
-                ✕
-              </button>
-              <h3 className={styles.modalTitle}>
-                {editingRowId
-                  ? "Edit Row"
-                  : `Add Row${activeTab?.tabName ? " – " + activeTab.tabName : ""}`}
-              </h3>
-              <form onSubmit={submitRowModal} className={styles.modalForm}>
-                {fields.map((f) => (
-                  <div key={f._id} className={styles.modalField}>
-                    <label>
-                      {f.type === "encrypt" && "🔒 "}
-                      {f.type === "file" && "📎 "}
-                      {f.label}
-                    </label>
-                    {f.type === "file" ? (
-                      <>
-                        <input
-                          type="file"
-                          onChange={(e) =>
-                            handleFileFieldChange(
-                              String(f._id),
-                              e.target.files?.[0],
-                            )
-                          }
-                        />
-                        {fileUploading[String(f._id)] && (
-                          <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>
-                            Uploading...
-                          </span>
-                        )}
-                        {!fileUploading[String(f._id)] &&
-                          rowForm[String(f._id)] && (
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle}>
+                  {editingRowId
+                    ? "Edit Row"
+                    : `Add Row${activeTab?.tabName ? " – " + activeTab.tabName : ""}`}
+                </h3>
+                <button
+                  type="button"
+                  className={styles.modalClose}
+                  onClick={() => setShowRowModal(false)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className={styles.modalBody}>
+                <form onSubmit={submitRowModal} className={styles.modalForm}>
+                  {fields.map((f) => (
+                    <div key={f._id} className={styles.modalField}>
+                      <label>
+                        {f.type === "encrypt" && "🔒 "}
+                        {f.type === "file" && "📎 "}
+                        {f.label}
+                      </label>
+                      {f.type === "file" ? (
+                        <>
+                          <input
+                            type="file"
+                            onChange={(e) =>
+                              handleFileFieldChange(
+                                String(f._id),
+                                e.target.files?.[0],
+                              )
+                            }
+                          />
+                          {fileUploading[String(f._id)] && (
                             <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>
-                              ✅{" "}
-                              {(() => {
-                                try {
-                                  return JSON.parse(rowForm[String(f._id)])
-                                    .name;
-                                } catch {
-                                  return "";
-                                }
-                              })()}
+                              Uploading...
                             </span>
                           )}
-                      </>
-                    ) : (
-                      <input
-                        type={
-                          f.type === "number"
-                            ? "number"
-                            : f.type === "date"
-                              ? "date"
-                              : f.type === "email"
-                                ? "email"
-                                : "text"
-                        }
-                        value={rowForm[String(f._id)] ?? ""}
-                        onChange={(e) =>
-                          setRowForm({
-                            ...rowForm,
-                            [String(f._id)]: e.target.value,
-                          })
-                        }
-                      />
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="submit"
-                  className={styles.modalSubmit}
-                  disabled={submittingRow}
-                >
-                  {submittingRow ? "Submitting..." : "Submit"}
-                </button>
-              </form>
+                          {!fileUploading[String(f._id)] &&
+                            rowForm[String(f._id)] && (
+                              <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>
+                                ✅{" "}
+                                {(() => {
+                                  try {
+                                    return JSON.parse(rowForm[String(f._id)])
+                                      .name;
+                                  } catch {
+                                    return "";
+                                  }
+                                })()}
+                              </span>
+                            )}
+                        </>
+                      ) : (
+                        <input
+                          type={
+                            f.type === "number"
+                              ? "number"
+                              : f.type === "date"
+                                ? "date"
+                                : f.type === "email"
+                                  ? "email"
+                                  : "text"
+                          }
+                          value={rowForm[String(f._id)] ?? ""}
+                          onChange={(e) =>
+                            setRowForm({
+                              ...rowForm,
+                              [String(f._id)]: e.target.value,
+                            })
+                          }
+                        />
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="submit"
+                    className={styles.modalSubmit}
+                    disabled={submittingRow}
+                  >
+                    {submittingRow ? "Submitting..." : "Submit"}
+                  </button>
+                </form>
+              </div>
             </div>
           </div>,
           document.body,
         )}
 
-      {}
+      { }
       {showTabModal &&
         typeof document !== "undefined" &&
         createPortal(
@@ -1045,109 +959,110 @@ const DynamicDataCard = ({ item }) => {
             onClick={() => setShowTabModal(false)}
           >
             <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                className={styles.modalClose}
-                onClick={() => setShowTabModal(false)}
-              >
-                ✕
-              </button>
-              <h3 className={styles.modalTitle}>
-                {editingTabId ? "Rename Tab" : "Add Tab"}
-              </h3>
-              <form onSubmit={submitTabModal} className={styles.modalForm}>
-                <div className={styles.modalField}>
-                  <label>Tab Name</label>
-                  <input
-                    type="text"
-                    autoFocus
-                    value={tabNameInput}
-                    onChange={(e) => setTabNameInput(e.target.value)}
-                    placeholder="e.g. Meter 1"
-                  />
-                </div>
-                <div className={styles.modalField}>
-                  <label>Detail (optional — a note specific to this tab)</label>
-                  <textarea
-                    rows={3}
-                    value={tabDetailInput}
-                    onChange={(e) => setTabDetailInput(e.target.value)}
-                    placeholder="e.g. Consumer ID: 1234567890"
-                  />
-                </div>
-                <div className={styles.modalField}>
-                  <label>Website Link (optional)</label>
-                  <input
-                    type="text"
-                    value={tabLinkInput}
-                    onChange={(e) => setTabLinkInput(e.target.value)}
-                    placeholder="https://..."
-                  />
-                </div>
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle}>
+                  {editingTabId ? "Rename Tab" : "Add Tab"}
+                </h3>
                 <button
-                  type="submit"
-                  className={styles.modalSubmit}
-                  disabled={submittingTab}
+                  type="button"
+                  className={styles.modalClose}
+                  onClick={() => setShowTabModal(false)}
                 >
-                  {submittingTab ? "Submitting..." : "Submit"}
+                  ✕
                 </button>
-              </form>
+              </div>
+              <div className={styles.modalBody}>
+                <form onSubmit={submitTabModal} className={styles.modalForm}>
+                  <div className={styles.modalField}>
+                    <label>Tab Name</label>
+                    <input
+                      type="text"
+                      autoFocus
+                      value={tabNameInput}
+                      onChange={(e) => setTabNameInput(e.target.value)}
+                      placeholder="e.g. Item 1"
+                    />
+                  </div>
+                  <div className={styles.modalField}>
+                    <label>Detail (optional — add as many notes as you need)</label>
+                    {tabDetailInputs.map((val, idx) => (
+                      <div key={idx} className={styles.detailInputRow}>
+                        <textarea
+                          rows={2}
+                          value={val}
+                          onChange={(e) =>
+                            setTabDetailInputs((prev) =>
+                              prev.map((d, i) =>
+                                i === idx ? e.target.value : d,
+                              ),
+                            )
+                          }
+                          placeholder="e.g. Add any notes here"
+                        />
+                        {tabDetailInputs.length > 1 && (
+                          <button
+                            type="button"
+                            className={styles.detailRemoveBtn}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() =>
+                              setTabDetailInputs((prev) =>
+                                prev.filter((_, i) => i !== idx),
+                              )
+                            }
+                            title="Remove this detail"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className={styles.addDetailBtn}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() =>
+                        setTabDetailInputs((prev) => [...prev, ""])
+                      }
+                    >
+                      + Add Detail
+                    </button>
+                  </div>
+                  <div className={styles.modalField}>
+                    <label>Link Name (optional)</label>
+                    <input
+                      type="text"
+                      value={tabLinkTitleInput}
+                      onChange={(e) => setTabLinkTitleInput(e.target.value)}
+                      placeholder="e.g. Visit Website"
+                    />
+                  </div>
+                  <div className={styles.modalField}>
+                    <label>Link URL (optional)</label>
+                    <input
+                      type="text"
+                      value={tabLinkUrlInput}
+                      onChange={(e) => setTabLinkUrlInput(e.target.value)}
+                      placeholder="https://..."
+                    />
+                    <span style={{ fontSize: "0.78rem", opacity: 0.7 }}>
+                      Name only shows as plain text. Add a URL here and the
+                      name becomes a clickable &quot;Visit Link&quot;.
+                    </span>
+                  </div>
+                  <button
+                    type="submit"
+                    className={styles.modalSubmit}
+                    disabled={submittingTab}
+                  >
+                    {submittingTab ? "Submitting..." : "Submit"}
+                  </button>
+                </form>
+              </div>
             </div>
           </div>,
           document.body,
         )}
 
-      {}
-      {showCardModal &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            className={styles.modalOverlay}
-            onClick={() => setShowCardModal(false)}
-          >
-            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                className={styles.modalClose}
-                onClick={() => setShowCardModal(false)}
-              >
-                ✕
-              </button>
-              <h3 className={styles.modalTitle}>
-                {editingCardId ? "Edit Card" : "Add Card"}
-              </h3>
-              <form onSubmit={submitCardModal} className={styles.modalForm}>
-                <div className={styles.modalField}>
-                  <label>Title</label>
-                  <input
-                    type="text"
-                    autoFocus
-                    value={cardTitleInput}
-                    onChange={(e) => setCardTitleInput(e.target.value)}
-                    placeholder="e.g. Search Hadith"
-                  />
-                </div>
-                <div className={styles.modalField}>
-                  <label>Link (optional)</label>
-                  <input
-                    type="text"
-                    value={cardLinkInput}
-                    onChange={(e) => setCardLinkInput(e.target.value)}
-                    placeholder="https://..."
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className={styles.modalSubmit}
-                  disabled={submittingCard}
-                >
-                  {submittingCard ? "Submitting..." : "Submit"}
-                </button>
-              </form>
-            </div>
-          </div>,
-          document.body,
-        )}
     </div>
   );
 };

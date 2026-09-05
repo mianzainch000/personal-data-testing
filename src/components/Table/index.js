@@ -24,7 +24,14 @@ const Table = ({
   dragEnabled = true,
 }) => {
   const [items, setItems] = useState([]);
-  const sensors = useSensors(useSensor(PointerSensor));
+  // A small activation distance stops normal taps/scrolls (especially on
+  // touch devices) from being hijacked as a drag, which is what made rows
+  // feel like they were jittering/wobbling on mobile.
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+  );
 
   useEffect(() => {
     if (Array.isArray(data)) setItems(data);

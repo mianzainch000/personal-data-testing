@@ -86,7 +86,7 @@ const SignupForm = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="Zain Ishfaq"
+                placeholder="John Doe"
                 required
               />
             </div>
